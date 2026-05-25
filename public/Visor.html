@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Visor - Murcia Sísmica</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body class="visor-body">
+
+<!-- ── CABECERA ── -->
+<header class="header-form">
+    <div style="display:flex;align-items:center;gap:12px;">
+        <a href="index.html" class="home-link" title="Inicio">
+            <img src="images/casa.png" alt="Inicio" style="width:24px;height:24px;">
+        </a>
+        <h1>Red Sismica Ciudadana (Murcia)</h1>
+    </div>
+    <div class="visor-usuario-wrapper" id="headerUsuario">
+        <button class="btn-registrar-visor" onclick="irARegistrar()">Registrar Movimiento</button>
+    </div>
+</header>
+
+<!-- ── MAPA ── -->
+<div class="visor-map-wrapper">
+    <div id="map"></div>
+
+    <!-- Botón filtro lateral -->
+    <button class="filtro-btn" onclick="toggleFiltroPanel()" title="Filtros">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+        </svg>
+    </button>
+
+    <!-- Buscador -->
+    <div class="visor-buscador">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" placeholder="Busca un lugar" oninput="buscarLugar(this.value)" />
+    </div>
+
+    <!-- Botón capas -->
+    <button class="capas-btn" onclick="toggleCapas(event)" title="Capas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+            <polyline points="2 17 12 22 22 17"/>
+            <polyline points="2 12 12 17 22 12"/>
+        </svg>
+    </button>
+
+    <!-- Panel capas -->
+    <div class="capas-panel" id="capasPanel">
+        <label>
+            <input type="checkbox" id="capaPoblacion" onchange="toggleCapaPoblacion(this.checked)">
+            Población
+        </label>
+        <label>
+            <input type="checkbox" id="capaUsos" onchange="toggleCapaUsos(this.checked)">
+            Usos del suelo
+        </label>
+    </div>
+
+    <!-- Panel lateral filtros -->
+    <div class="filtro-panel" id="filtroPanel">
+        <button class="filtro-cerrar" onclick="toggleFiltroPanel()" title="Cerrar">&times;</button>
+
+        <!-- Registros ciudadanos (primero) -->
+        <div class="filtro-check-row">
+            <input type="checkbox" id="filtroPercibidos" checked onchange="aplicarFiltros()">
+            <label for="filtroPercibidos" style="font-weight:bold;">Registros Ciudadanos</label>
+        </div>
+
+        <span class="filtro-sublabel">Fuerza Percibida: <span id="valFuerza">1 – 10</span></span>
+        <div class="range-slider-wrap">
+            <div class="slider-track" id="trackFuerza"></div>
+            <input type="range" id="fuerzaMin" min="1" max="10" value="1" step="1" oninput="controlFuerza()">
+            <input type="range" id="fuerzaMax" min="1" max="10" value="10" step="1" oninput="controlFuerza()">
+        </div>
+        <div class="range-ticks">
+            <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+            <span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+        </div>
+
+        <span class="filtro-sublabel">Rango de Años: <span id="valAnioPerc">1980 – 2026</span></span>
+        <div class="range-slider-wrap">
+            <div class="slider-track" id="trackAnioPerc"></div>
+            <input type="range" id="anioPercMin" min="1980" max="2026" value="1980" step="1" oninput="controlAnioPerc()">
+            <input type="range" id="anioPercMax" min="1980" max="2026" value="2026" step="1" oninput="controlAnioPerc()">
+        </div>
+        <div class="range-ticks">
+            <span>1980</span><span>2026</span>
+        </div>
+
+        <hr class="filtro-separador">
+
+        <!-- Terremotos IGN (segundo) -->
+        <div class="filtro-check-row">
+            <input type="checkbox" id="filtroIGN" checked onchange="aplicarFiltros()">
+            <label for="filtroIGN" style="font-weight:bold;">Terremotos IGN</label>
+        </div>
+
+        <span class="filtro-sublabel">Rango de Magnitud: <span id="valMag">0.0 – 6.0</span></span>
+        <div class="range-slider-wrap">
+            <div class="slider-track" id="trackMag"></div>
+            <input type="range" id="magMin" min="0" max="6" value="0" step="0.1" class="ign-slider" oninput="controlMag()">
+            <input type="range" id="magMax" min="0" max="6" value="6" step="0.1" class="ign-slider" oninput="controlMag()">
+        </div>
+        <div class="range-ticks">
+            <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span>
+        </div>
+
+        <span class="filtro-sublabel">Rango de Años: <span id="valAnio">1980 – 2026</span></span>
+        <div class="range-slider-wrap">
+            <div class="slider-track" id="trackAnio"></div>
+            <input type="range" id="anioMin" min="1980" max="2026" value="1980" step="1" class="ign-slider" oninput="controlAnio()">
+            <input type="range" id="anioMax" min="1980" max="2026" value="2026" step="1" class="ign-slider" oninput="controlAnio()">
+        </div>
+        <div class="range-ticks">
+            <span>1980</span><span>2026</span>
+        </div>
+
+
+    </div>
+
+    <!-- Leyenda -->
+    <div class="visor-leyenda">
+        <h4>Leyenda</h4>
+        <div class="leyenda-item">
+            <span class="leyenda-circulo" style="width:10px;height:10px;background:#f39c12;"></span>
+            <span>Mag &lt; 2.0</span>
+        </div>
+        <div class="leyenda-item">
+            <span class="leyenda-circulo" style="width:14px;height:14px;background:#e67e22;"></span>
+            <span>Mag 2.0 - 3.5</span>
+        </div>
+        <div class="leyenda-item">
+            <span class="leyenda-circulo" style="width:18px;height:18px;background:#e74c3c;"></span>
+            <span>Mag 3.5 - 5.0</span>
+        </div>
+        <div class="leyenda-item">
+            <span class="leyenda-circulo" style="width:22px;height:22px;background:#8b0000;"></span>
+            <span>Mag &gt; 5.0</span>
+        </div>
+        <div class="leyenda-item" style="margin-top:6px;border-top:1px solid #eee;padding-top:6px;">
+            <span class="leyenda-circulo" style="width:14px;height:14px;background:#2980b9;"></span>
+            <span>Movimientos percibidos</span>
+        </div>
+    </div>
+
+    <!-- Contador -->
+    <div class="visor-contador">
+        <div>IGN: <strong id="cntIGN">Cargando…</strong></div>
+        <div>Percibidos: <strong id="cntPercibidos">-</strong></div>
+    </div>
+</div>
+
+<!-- ── MODAL login ── -->
+<div class="overlay-modal" id="modalLogin" onclick="cerrarModalLogin(event)">
+    <div class="modal-card">
+        <button class="modal-close-x"
+                onclick="document.getElementById('modalLogin').classList.remove('open')">&times;</button>
+        <div class="modal-icono">🔒</div>
+        <h3>Acceso requerido</h3>
+        <p>Debes iniciar sesión para poder registrar un terremoto.</p>
+        <div class="modal-botones">
+            <a href="login.html?aviso=registro&origen=visor" class="btn btn-azul"
+               style="width:100%;box-sizing:border-box;">Iniciar sesión</a>
+            <a href="CrearUsuario.html?aviso=registro&origen=visor" class="btn btn-verde"
+               style="width:100%;box-sizing:border-box;padding:12px;font-size:1rem;">Crear cuenta</a>
+        </div>
+    </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+//  SESIÓN
+// ════════════════════════════════════════
+const usuarioId     = sessionStorage.getItem('usuarioId');
+const usuarioNombre = sessionStorage.getItem('usuarioNombre');
+const headerUsuario = document.getElementById('headerUsuario');
+const btnRegistrar  = `<button class="btn-registrar-visor" onclick="irARegistrar()">Registrar Movimiento</button>`;
+
+if (usuarioId) {
+    headerUsuario.innerHTML = `
+        ${btnRegistrar}
+        <div class="visor-usuario-contenedor">
+            <button class="visor-usuario-btn" onclick="toggleDropdown(event)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;margin-right:5px;">
+                    <circle cx="12" cy="8" r="4"/>
+                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+                </svg>
+                ${usuarioNombre}
+            </button>
+            <div class="dropdown-menu" id="dropdownMenu">
+                <a href="MiCuenta.html">Mi cuenta</a>
+                <a href="MisRegistros.html">Mis registros</a>
+                <button class="cerrar-sesion" onclick="cerrarSesion()">Cerrar Sesión</button>
+            </div>
+        </div>`;
+} else {
+    headerUsuario.innerHTML = `
+        ${btnRegistrar}
+        <a class="login" href="login.html">Iniciar sesión</a>`;
+}
+
+function toggleDropdown(e) {
+    e.stopPropagation();
+    document.getElementById('dropdownMenu').classList.toggle('open');
+}
+
+// Click fuera → cerrar dropdown y panel capas
+document.addEventListener('click', () => {
+    document.getElementById('dropdownMenu')?.classList.remove('open');
+    document.getElementById('capasPanel')?.classList.remove('open');
+});
+
+async function cerrarSesion() {
+    try { await fetch('/users/logout', { method: 'POST', credentials: 'include' }); } catch(_) {}
+    sessionStorage.removeItem('usuarioId');
+    sessionStorage.removeItem('usuarioNombre');
+    window.location.href = 'index.html';
+}
+
+function irARegistrar() {
+    if (usuarioId) {
+        window.location.href = 'registrarTerremotos.html?origen=visor';
+    } else {
+        document.getElementById('modalLogin').classList.add('open');
+    }
+}
+
+function cerrarModalLogin(e) {
+    if (e.target === document.getElementById('modalLogin'))
+        document.getElementById('modalLogin').classList.remove('open');
+}
+
+// ════════════════════════════════════════
+//  MAPA BASE
+// ════════════════════════════════════════
+const map = L.map('map', { zoomControl: false, minZoom: 6 }).setView([37.987, -1.13], 8);
+L.control.zoom({ position: 'bottomleft' }).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+let capaPoblacionLayer = null;
+let capaUsosLayer      = null;
+
+function toggleCapaPoblacion(activa) {
+    if (activa) {
+        capaPoblacionLayer = L.tileLayer(
+            'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_nolabels/{z}/{x}/{y}.png',
+            { opacity: 0.5, attribution: '© CARTO' }
+        ).addTo(map);
+    } else {
+        if (capaPoblacionLayer) { map.removeLayer(capaPoblacionLayer); capaPoblacionLayer = null; }
+    }
+}
+
+function toggleCapaUsos(activa) {
+    if (activa) {
+        capaUsosLayer = L.tileLayer(
+            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            { opacity: 0.35, attribution: '© OpenStreetMap' }
+        ).addTo(map);
+    } else {
+        if (capaUsosLayer) { map.removeLayer(capaUsosLayer); capaUsosLayer = null; }
+    }
+}
+
+function toggleCapas(e) {
+    e.stopPropagation();
+    document.getElementById('capasPanel').classList.toggle('open');
+}
+
+// ════════════════════════════════════════
+//  NORMALIZACIÓN IGN
+// ════════════════════════════════════════
+function normalizeIGN(feature) {
+    const p      = feature.properties;
+    const coords = feature.geometry.coordinates; // [lng, lat]
+    const mag    = parseFloat(p.magnitud) || 0;
+    let fecha    = null;
+    const fechaStr = p.fecha || '';
+    const horaStr  = p.hora  || '';
+    if (fechaStr) {
+        const [d, m, y] = fechaStr.split('/');
+        fecha = new Date(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}T${horaStr || '00:00:00'}`);
+    }
+    return {
+        evento: p.evid || '', fecha, fechaStr, horaStr,
+        lat: coords[1], lng: coords[0],
+        profundidad: parseFloat(p.profundidad) || 0,
+        intensidad:  p.intensidad || '',
+        mag,
+        localizacion: p.localizacion || '',
+    };
+}
+
+function colorIGN(mag) {
+    if (mag >= 5.0) return '#8b0000';
+    if (mag >= 3.5) return '#e74c3c';
+    if (mag >= 2.0) return '#e67e22';
+    return '#f39c12';
+}
+
+function radioIGN(mag) {
+    if (mag >= 5.0) return 13;
+    if (mag >= 3.5) return 8;
+    if (mag >= 2.0) return 5;
+    return 3.5;
+}
+
+function crearMarcadorIGN(t) {
+    const col = colorIGN(t.mag);
+    const c = L.circleMarker([t.lat, t.lng], {
+        radius: radioIGN(t.mag), fillColor: col,
+        color: col, weight: 1.5, fillOpacity: 0.72
+    }).addTo(map);
+    const fechaFmt = t.fechaStr
+        ? `${t.fechaStr}${t.horaStr ? ' ' + t.horaStr : ''}`
+        : 'Fecha desconocida';
+    c.bindPopup(`
+        <div style="font-size:0.82rem;color:#333;line-height:1.7;min-width:190px;">
+            <strong style="color:#1a4a7a;">📍 ${t.localizacion || 'Sin nombre'}</strong><br>
+            <span style="font-size:1rem;font-weight:700;color:${col};">M ${t.mag.toFixed(1)}</span>
+            ${t.intensidad ? `&nbsp;·&nbsp;Int. <strong>${t.intensidad}</strong>` : ''}<br>
+            📅 ${fechaFmt}<br>
+            🔽 Prof. ${t.profundidad} km<br>
+            <span style="font-size:0.72rem;color:#999;">Fuente: IGN · Evento ${t.evento}</span>
+        </div>`);
+    return c;
+}
+
+// ════════════════════════════════════════
+//  MARCADORES CIUDADANOS
+// ════════════════════════════════════════
+function colorPercibido(f) {
+    if (f >= 8) return '#1a4a7a';
+    if (f >= 5) return '#2980b9';
+    return '#5dade2';
+}
+
+function crearMarcadorPercibido(r) {
+    const col = colorPercibido(r.fuerza);
+    const c = L.circleMarker([r.lat, r.lng], {
+        radius: 6 + r.fuerza * 1.3, fillColor: col,
+        color: col, weight: 2, fillOpacity: 0.75
+    }).addTo(map);
+    const fecha = new Date(r.fechaHora).toLocaleString('es-ES', { dateStyle:'short', timeStyle:'short' });
+    c.bindPopup(`
+        <div style="font-size:0.83rem;color:#333;line-height:1.6;min-width:175px;">
+            <strong style="color:#1a4a7a;">👤 ${r.ubicacion}</strong><br>
+            <span style="font-size:1.05rem;font-weight:700;color:${col};">Fuerza: ${r.fuerza}/10</span><br>
+            📅 ${fecha}<br>
+            ${r.descripcion ? `<em>${r.descripcion}</em><br>` : ''}
+            <span style="font-size:0.72rem;color:#999;">Fuente: Registro ciudadano</span>
+        </div>`);
+    return c;
+}
+
+// ════════════════════════════════════════
+//  ESTADO Y RENDERIZADO
+// ════════════════════════════════════════
+let datosIGN = [], marcadoresIGN = [];
+let datosPercibidos = [], marcadoresPerc = [];
+
+function renderizarIGN(lista) {
+    marcadoresIGN.forEach(m => map.removeLayer(m));
+    marcadoresIGN = lista.map(crearMarcadorIGN);
+    document.getElementById('cntIGN').textContent = lista.length.toLocaleString('es-ES');
+}
+
+function renderizarPercibidos(lista) {
+    marcadoresPerc.forEach(m => map.removeLayer(m));
+    marcadoresPerc = lista.map(crearMarcadorPercibido);
+    document.getElementById('cntPercibidos').textContent = lista.length.toLocaleString('es-ES');
+}
+
+// ════════════════════════════════════════
+//  DUAL RANGE SLIDERS
+// ════════════════════════════════════════
+
+/** Pinta la barra coloreada entre min y max con el color indicado */
+function updateTrack(minInput, maxInput, trackEl, rangeMin, rangeMax, color) {
+    const lo = ((parseFloat(minInput.value) - rangeMin) / (rangeMax - rangeMin)) * 100;
+    const hi = ((parseFloat(maxInput.value) - rangeMin) / (rangeMax - rangeMin)) * 100;
+    trackEl.style.background =
+        `linear-gradient(to right, #ddd ${lo}%, ${color} ${lo}%, ${color} ${hi}%, #ddd ${hi}%)`;
+}
+
+// Naranja para IGN
+function controlMag() {
+    const minInput = document.getElementById('magMin');
+    const maxInput = document.getElementById('magMax');
+    const track = document.getElementById('trackMag');
+    const display = document.getElementById('valMag');
+    let valMin = parseFloat(minInput.value);
+    let valMax = parseFloat(maxInput.value);
+    const gap = 0.1; // Diferencia mínima de magnitud
+    if (valMin > valMax - gap) {
+        if (document.activeElement === minInput) {
+            minInput.value = (valMax - gap).toFixed(1);
+            valMin = valMax - gap;
+        } else {
+            maxInput.value = (valMin + gap).toFixed(1);
+            valMax = valMin + gap;
+        }
+    }
+    updateTrack(minInput, maxInput, track, 0, 6, '#e67e22');
+    display.textContent = `${valMin.toFixed(1)} – ${valMax.toFixed(1)}`;
+
+    aplicarFiltros();
+}
+
+function controlAnio() {
+    const minInput = document.getElementById('anioMin');
+    const maxInput = document.getElementById('anioMax');
+    const track = document.getElementById('trackAnio');
+    const display = document.getElementById('valAnio');
+    let valMin = parseInt(minInput.value);
+    let valMax = parseInt(maxInput.value);
+    const gap = 1; // Diferencia mínima de años
+    if (valMin > valMax - gap) {
+        if (document.activeElement === minInput) {
+            minInput.value = valMax - gap;
+            valMin = valMax - gap;
+        } else {
+            maxInput.value = valMin + gap;
+            valMax = valMin + gap;
+        }
+    }
+    updateTrack(minInput, maxInput, track, 1980, 2026, '#e67e22');
+    display.textContent = `${valMin} – ${valMax}`;
+    
+    aplicarFiltros();
+}
+
+// Azul para ciudadanos
+function controlFuerza() {
+    const minInput = document.getElementById('fuerzaMin');
+    const maxInput = document.getElementById('fuerzaMax');
+    const track = document.getElementById('trackFuerza');
+    const display = document.getElementById('valFuerza');
+    let valMin = parseInt(minInput.value);
+    let valMax = parseInt(maxInput.value);
+    const gap = 1;
+    if (valMin > valMax - gap) {
+        // Si movemos el de la izquierda hacia la derecha
+        if (document.activeElement === minInput) {
+            minInput.value = valMax - gap;
+            valMin = valMax - gap;
+        } 
+        // Si movemos el de la derecha hacia la izquierda
+        else {
+            maxInput.value = valMin + gap;
+            valMax = valMin + gap;
+        }
+    }
+    updateTrack(minInput, maxInput, track, 1, 10, '#1a4a7a');
+    display.textContent = `${valMin} – ${valMax}`;
+ 
+    aplicarFiltros();
+}
+
+function controlAnioPerc() {
+    const minInput = document.getElementById('anioPercMin');
+    const maxInput = document.getElementById('anioPercMax');
+    const track = document.getElementById('trackAnioPerc');
+    const display = document.getElementById('valAnioPerc');
+    let valMin = parseInt(minInput.value);
+    let valMax = parseInt(maxInput.value);
+    const gap = 1; 
+    if (valMin > valMax - gap) {
+        if (document.activeElement === minInput) {
+            minInput.value = valMax - gap;
+            valMin = valMax - gap;
+        } else {
+            maxInput.value = valMin + gap;
+            valMax = valMin + gap;
+        }
+    }
+    updateTrack(minInput, maxInput, track, 1980, 2026, '#1a4a7a');
+    display.textContent = `${valMin} – ${valMax}`;
+
+    aplicarFiltros();
+}
+
+// Inicializar pistas al cargar
+window.addEventListener('load', () => {
+    controlMag();
+    controlAnio();
+    controlFuerza();
+    controlAnioPerc();
+});
+
+// ════════════════════════════════════════
+//  FILTROS
+// ════════════════════════════════════════
+function aplicarFiltros() {
+    const mostrarIGN  = document.getElementById('filtroIGN').checked;
+    const mostrarPerc = document.getElementById('filtroPercibidos').checked;
+
+    const mMin  = parseFloat(document.getElementById('magMin').value);
+    const mMax  = parseFloat(document.getElementById('magMax').value);
+    const aMin  = parseInt(document.getElementById('anioMin').value);
+    const aMax  = parseInt(document.getElementById('anioMax').value);
+    const fMin  = parseInt(document.getElementById('fuerzaMin').value);
+    const fMax  = parseInt(document.getElementById('fuerzaMax').value);
+    const apMin = parseInt(document.getElementById('anioPercMin').value);
+    const apMax = parseInt(document.getElementById('anioPercMax').value);
+
+    // IGN
+    if (mostrarIGN) {
+        renderizarIGN(datosIGN.filter(t => {
+            const anio = t.fecha ? t.fecha.getFullYear() : 0;
+            return t.mag >= mMin && t.mag <= mMax && anio >= aMin && anio <= aMax;
+        }));
+    } else {
+        marcadoresIGN.forEach(m => map.removeLayer(m));
+        marcadoresIGN = [];
+        document.getElementById('cntIGN').textContent = '0';
+    }
+
+    // Ciudadano
+    if (mostrarPerc) {
+        renderizarPercibidos(datosPercibidos.filter(r => {
+            const f    = parseInt(r.fuerza);
+            const anio = r.fechaHora ? new Date(r.fechaHora).getFullYear() : 0;
+            return f >= fMin && f <= fMax && anio >= apMin && anio <= apMax;
+        }));
+    } else {
+        marcadoresPerc.forEach(m => map.removeLayer(m));
+        marcadoresPerc = [];
+        document.getElementById('cntPercibidos').textContent = '0';
+    }
+}
+
+function toggleFiltroPanel() {
+    const panel = document.getElementById('filtroPanel');
+    const btn   = document.querySelector('.filtro-btn');
+    const open  = panel.classList.toggle('open');
+    btn.style.display = open ? 'none' : '';
+}
+
+// ════════════════════════════════════════
+//  CARGA GEOJSON IGN
+// ════════════════════════════════════════
+fetch('/descargar_terremotos/terremotos_murcia.geojson')
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then(geojson => {
+        datosIGN = geojson.features
+            .filter(f => f.geometry && Array.isArray(f.geometry.coordinates))
+            .map(normalizeIGN);
+        renderizarIGN(datosIGN);
+    })
+    .catch(err => {
+        console.error('[IGN] Error al cargar GeoJSON:', err.message);
+        document.getElementById('cntIGN').textContent = 'Error';
+    });
+
+// ════════════════════════════════════════
+//  CARGA REGISTROS CIUDADANOS
+// ════════════════════════════════════════
+
+fetch('/registros')
+    .then(r => r.ok ? r.json() : [])
+    .then(data => {
+        datosPercibidos = Array.isArray(data)
+            ? data.filter(r => r.latitud && r.longitud).map(r => ({
+                id: r._id, ubicacion: r.ubicacion,
+                lat: parseFloat(r.latitud), lng: parseFloat(r.longitud),
+                fuerza: parseInt(r.fuerza), fechaHora: r.fechaHora,
+                descripcion: r.descripcion
+              }))
+            : [];
+        renderizarPercibidos(datosPercibidos);
+        controlFuerza();
+        controlAnioPerc();
+    })
+    .catch(() => { renderizarPercibidos([]); });
+
+// ════════════════════════════════════════
+//  BUSCADOR
+// ════════════════════════════════════════
+let buscarTimeout = null;
+function buscarLugar(texto) {
+    clearTimeout(buscarTimeout);
+    if (texto.length < 3) return;
+    buscarTimeout = setTimeout(async () => {
+        try {
+            const res  = await fetch(
+                `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(texto)}&format=json&limit=1`,
+                { headers: { 'Accept-Language': 'es' } }
+            );
+            const data = await res.json();
+            if (data.length > 0) map.setView([parseFloat(data[0].lat), parseFloat(data[0].lon)], 13);
+        } catch(e) {}
+    }, 600);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>RSC Murcia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+
+<!-- ── CABECERA ── -->
+<header class="header-form">
+    <div style="display:flex; align-items:center; gap:12px;">
+        <a href="index.html" class="home-link" title="Inicio">
+            <img src="images/casa.png" alt="Inicio" style="width:24px; height:24px;">
+        </a>
+        <h1>Red Sismica Ciudadana (Murcia)</h1>
+    </div>
+    <div id="headerUsuario"></div>
+</header>
+
+<!-- ── CONTENIDO ── -->
+<main class="contenido-login">
+    <div class="tarjeta-form" style="max-width:680px;">
+
+        <!-- Modo vista -->
+        <div id="modoVista">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:28px;">
+                <h2 style="margin:0; color:#1a4a7a; font-size:1.5rem;">Mi cuenta:</h2>
+                <button onclick="activarEdicion()" title="Editar" style="background:none;border:none;cursor:pointer;padding:4px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a4a7a" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px 40px;">
+                <div>
+                    <p style="margin:0 0 4px; font-size:0.85rem; color:#888;">Nombre:</p>
+                    <p id="vista-nombre" style="margin:0; font-size:1rem; color:#222; font-weight:500;">—</p>
+                </div>
+                <div>
+                    <p style="margin:0 0 4px; font-size:0.85rem; color:#888;">Apellidos:</p>
+                    <p id="vista-apellidos" style="margin:0; font-size:1rem; color:#222; font-weight:500;">—</p>
+                </div>
+                <div>
+                    <p style="margin:0 0 4px; font-size:0.85rem; color:#888;">Email:</p>
+                    <p id="vista-email" style="margin:0; font-size:1rem; color:#222; font-weight:500;">—</p>
+                </div>
+                <div>
+                    <p style="margin:0 0 4px; font-size:0.85rem; color:#888;">Nombre de usuario:</p>
+                    <p id="vista-usuario" style="margin:0; font-size:1rem; color:#222; font-weight:500;">—</p>
+                </div>
+                <div>
+                    <p style="margin:0 0 4px; font-size:0.85rem; color:#888;">Contraseña:</p>
+                    <p style="margin:0; font-size:1rem; color:#222; letter-spacing:2px;">***********</p>
+                </div>
+            </div>
+
+            <div class="botones-usuario" style="margin-top:36px;">
+                <a href="MisRegistros.html" class="btn btn-verde" style="width:70%; padding:14px; font-size:1.1rem;">
+                    Ir a mis registros
+                </a>
+                <a href="index.html" class="btn btn-rojo" style="width:50%;">Volver al Inicio</a>
+            </div>
+        </div>
+
+        <!-- Modo edición -->
+        <div id="modoEdicion" style="display:none;">
+            <h2 style="color:#1a4a7a; font-size:1.5rem; margin-bottom:28px;">Modificar mis datos:</h2>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px 40px;">
+                <div class="campo-grupo">
+                    <label>Nombre:</label>
+                    <input type="text" id="edit-nombre" placeholder="Nombre">
+                    <span class="error-msg" id="err-edit-nombre">El nombre es obligatorio.</span>
+                </div>
+                <div class="campo-grupo">
+                    <label>Apellidos:</label>
+                    <input type="text" id="edit-apellidos" placeholder="Apellidos">
+                    <span class="error-msg" id="err-edit-apellidos">Los apellidos son obligatorios.</span>
+                </div>
+                <div class="campo-grupo">
+                    <label>Email:</label>
+                    <input type="email" id="edit-email" placeholder="Email">
+                    <span class="error-msg" id="err-edit-email">Email no válido.</span>
+                </div>
+                <div class="campo-grupo">
+                    <label>Nombre de usuario:</label>
+                    <input type="text" id="edit-usuario" placeholder="Nombre de usuario">
+                    <span class="error-msg" id="err-edit-usuario">El usuario es obligatorio.</span>
+                </div>
+                <div class="campo-grupo" style="grid-column: 1 / -1;">
+                    <label>Contraseña:</label>
+                    <input type="password" id="edit-contraseña" placeholder="Nueva contraseña (dejar vacío para no cambiar)">
+                </div>
+            </div>
+
+            <p class="error-msg" id="err-edit-servidor" style="text-align:center; font-size:0.9rem; margin-top:8px;"></p>
+
+            <div class="botones-usuario" style="margin-top:28px;">
+                <button class="btn btn-azul" onclick="guardarCambios()" style="width:70%; padding:14px; font-size:1.1rem;">
+                    Guardar información
+                </button>
+                <button class="btn btn-rojo" onclick="cancelarEdicion()" style="width:50%; border:none; cursor:pointer;">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<script>
+// ── SESIÓN ──
+const usuarioId     = sessionStorage.getItem('usuarioId');
+const usuarioNombre = sessionStorage.getItem('usuarioNombre');
+
+if (!usuarioId) {
+    window.location.href = 'login.html';
+}
+
+// ── CABECERA ──
+document.getElementById('headerUsuario').innerHTML = `
+    <div class="usuario-wrapper">
+        <button class="usuario-btn" onclick="toggleDropdown(event)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="8" r="4"/>
+                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+            </svg>
+            ${usuarioNombre}
+        </button>
+        <div class="dropdown-menu" id="dropdownMenu">
+            <a href="MiCuenta.html">Mi cuenta</a>
+            <a href="MisRegistros.html">Mis registros</a>
+            <button class="cerrar-sesion" onclick="cerrarSesion()">Cerrar Sesión</button>
+        </div>
+    </div>`;
+
+function toggleDropdown(e) {
+    e.stopPropagation();
+    document.getElementById('dropdownMenu').classList.toggle('open');
+}
+document.addEventListener('click', () => {
+    document.getElementById('dropdownMenu')?.classList.remove('open');
+});
+async function cerrarSesion() {
+    try { await fetch('/users/logout', { method: 'POST', credentials: 'include' }); } catch(_) {}
+    sessionStorage.removeItem('usuarioId');
+    sessionStorage.removeItem('usuarioNombre');
+    window.location.href = 'index.html';
+}
+
+// ── CARGAR DATOS ──
+let datosUsuario = {};
+
+async function cargarDatos() {
+    try {
+        const res = await fetch(`/users/${usuarioId}`, { credentials: 'include' });
+        if (!res.ok) throw new Error();
+        datosUsuario = await res.json();
+        document.getElementById('vista-nombre').textContent    = datosUsuario.nombre    || '—';
+        document.getElementById('vista-apellidos').textContent = datosUsuario.apellidos || '—';
+        document.getElementById('vista-email').textContent     = datosUsuario.email     || '—';
+        document.getElementById('vista-usuario').textContent   = datosUsuario.usuario   || '—';
+    } catch {
+        // Si la API no está lista, mostrar datos de sesión
+        document.getElementById('vista-usuario').textContent = usuarioNombre || '—';
+    }
+}
+
+cargarDatos();
+
+// ── EDICIÓN ──
+function activarEdicion() {
+    document.getElementById('edit-nombre').value     = datosUsuario.nombre    || '';
+    document.getElementById('edit-apellidos').value  = datosUsuario.apellidos || '';
+    document.getElementById('edit-email').value      = datosUsuario.email     || '';
+    document.getElementById('edit-usuario').value    = datosUsuario.usuario   || '';
+    document.getElementById('edit-contraseña').value = '';
+    document.getElementById('modoVista').style.display   = 'none';
+    document.getElementById('modoEdicion').style.display = 'block';
+}
+
+function cancelarEdicion() {
+    document.getElementById('modoEdicion').style.display = 'none';
+    document.getElementById('modoVista').style.display   = 'block';
+}
+
+function mostrarError(id, mostrar, texto) {
+    const el = document.getElementById(id);
+    el.style.display = mostrar ? 'block' : 'none';
+    if (texto) el.textContent = texto;
+}
+
+async function guardarCambios() {
+    const nombre     = document.getElementById('edit-nombre').value.trim();
+    const apellidos  = document.getElementById('edit-apellidos').value.trim();
+    const email      = document.getElementById('edit-email').value.trim();
+    const usuario    = document.getElementById('edit-usuario').value.trim();
+    const contraseña = document.getElementById('edit-contraseña').value;
+    const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+    mostrarError('err-edit-nombre',    !nombre);
+    mostrarError('err-edit-apellidos', !apellidos);
+    mostrarError('err-edit-email',     !emailValido);
+    mostrarError('err-edit-usuario',   !usuario);
+    mostrarError('err-edit-servidor',  false);
+
+    if (!nombre || !apellidos || !emailValido || !usuario) return;
+
+    const body = { nombre, apellidos, email, usuario };
+    if (contraseña.length > 0) body.contraseña = contraseña;
+
+    try {
+        const res = await fetch(`/users/${usuarioId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(body)
+        });
+        if (res.ok) {
+            sessionStorage.setItem('usuarioNombre', usuario);
+            await cargarDatos();
+            cancelarEdicion();
+        } else {
+            const datos = await res.json();
+            mostrarError('err-edit-servidor', true, datos.error || 'Error al guardar los cambios.');
+        }
+    } catch {
+        mostrarError('err-edit-servidor', true, 'No se pudo conectar con el servidor.');
+    }
+}
+</script>
+
+</body>
+</html>

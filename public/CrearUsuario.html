@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>RSC Murcia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+    <script>
+        function mostrarPassword() {
+            var cambio = document.getElementById("contraseña");
+            var icono = document.getElementById("img-ojo");
+
+            if (cambio.type == "password") {
+                cambio.type = "text";
+                // Cambia a la imagen de ojo abierto
+                icono.src = "images/ojo-abierto.png"; 
+            } else {
+                cambio.type = "password";
+                // Vuelve a la imagen de ojo cerrado
+                icono.src = "images/ojo-cerrado.png";
+            }
+        }
+    </script>
+
+    <header class="header-form">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <a href="index.html" class="home-link" title="Inicio">
+                <img src="images/casa.png" alt="Inicio" style="width:24px; height:24px;">
+            </a>
+            <h1>Red Sismica Ciudadana</h1>
+        </div>
+    </header>
+
+    <main class="contenido-login">
+        <div class="tarjeta-form">
+
+            <a href="javascript:history.back()" class="btn-atras-img" title="Volver atrás">
+                <img src="images/flecha-izquierda.png" alt="Volver">
+            </a>
+            <h2 style="text-align:center; color:#1a4a7a; margin-bottom:24px;">Creación de usuario</h2> 
+
+            <div class="campo-grupo">
+                <label for="nombre">Nombre:</label>
+                <input type="text" id="nombre">
+                <span class="error-msg" id="err-nombre">El nombre es obligatorio.</span>
+            </div>
+
+            <div class="campo-grupo">
+                <label for="apellidos">Apellidos:</label>
+                <input type="text" id="apellidos">
+                <span class="error-msg" id="err-apellidos">Los apellidos son obligatorios.</span>
+            </div>
+
+            <div class="campo-grupo">
+                <label for="email">Correo electrónico:</label>
+                <input type="email" id="email">
+                <span class="error-msg" id="err-email">Introduzca un correo válido.</span>
+            </div>
+
+            <div class="campo-grupo">
+                <label for="usuario">Nombre de usuario:</label>
+                <input type="text" id="usuario">
+                <span class="error-msg" id="err-usuario">El nombre de usuario es obligatorio.</span>
+            </div>
+
+            <div class="campo-grupo">
+                <label for="contraseña">Contraseña:</label>
+                <div class="input-wrapper">
+                    <input type="password" id="contraseña">
+                    <button type="button" class="toggle-pass" onclick="mostrarPassword()">
+                        <img id="img-ojo" src="images/ojo-cerrado.png" alt="Mostrar">
+                    </button>
+                </div>
+                <span class="error-msg" id="err-contraseña">Introduzca una contraseña de al menos 6 caracteres.</span>
+            </div>
+
+            <p class="error-msg" id="err-servidor" style="text-align:center; font-size:0.9rem;"></p>
+
+            <div class="botones-usuario">
+                <button class="btn btn-azul" onclick="crearUsuario()">Crear Usuario</button>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        function mostrarError(id, mostrar, texto) {
+            const el = document.getElementById(id);
+            el.style.display = mostrar ? 'block' : 'none';
+            if (texto) el.textContent = texto;
+        }
+
+        async function crearUsuario() {
+            const nombre     = document.getElementById('nombre').value.trim();
+            const apellidos  = document.getElementById('apellidos').value.trim();
+            const email      = document.getElementById('email').value.trim();
+            const usuario    = document.getElementById('usuario').value.trim();
+            const contraseña = document.getElementById('contraseña').value;
+
+            const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+            mostrarError('err-nombre',     !nombre);
+            mostrarError('err-apellidos',  !apellidos);
+            mostrarError('err-email',      !emailValido);
+            mostrarError('err-usuario',    !usuario);
+            mostrarError('err-contraseña', contraseña.length < 6);
+            mostrarError('err-servidor',   false);
+
+            if (!nombre || !apellidos || !emailValido || !usuario || contraseña.length < 6) return;
+
+            try {
+                const respuesta = await fetch('/users/crear', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre, apellidos, email, usuario, contraseña })
+                });
+
+                if (respuesta.ok) {
+                    const params = new URLSearchParams(window.location.search);
+                    const aviso  = params.get('aviso');
+                    const origen = params.get('origen');
+                    if (aviso === 'registro') {
+                        window.location.href = origen === 'visor'
+                            ? 'login.html?aviso=registro&origen=visor'
+                            : 'login.html?aviso=registro';
+                    } else {
+                        window.location.href = 'login.html';
+                    }
+                } else {
+                    const datos = await respuesta.json();
+                    mostrarError('err-servidor', true, datos.error || 'Error al crear el usuario.');
+                }
+            } catch (err) {
+                alert('No se pudo conectar con el servidor.');
+            }
+        }
+    </script>
+
+</body>
+</html>

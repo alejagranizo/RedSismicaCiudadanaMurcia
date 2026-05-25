@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>RSC Murcia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/index.css">
+    <style>
+        .usuario-wrapper { position: relative; display: flex; align-items: center; }
+        .usuario-btn {
+            display: flex; align-items: center; gap: 8px;
+            background: none; border: none; color: white;
+            cursor: pointer; font-size: 0.95rem;
+            padding: 6px 10px; border-radius: 8px; transition: background 0.15s;
+        }
+        .usuario-btn:hover { background: rgba(255,255,255,0.15); }
+        .usuario-btn svg { width: 28px; height: 28px; }
+        .dropdown-menu {
+            display: none; position: absolute; top: calc(100% + 8px); right: 0;
+            background: white; border-radius: 10px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+            overflow: hidden; min-width: 170px; z-index: 999;
+        }
+        .dropdown-menu.open { display: block; }
+        .dropdown-menu a, .dropdown-menu button {
+            display: block; width: 100%; text-align: left;
+            padding: 11px 18px; font-size: 0.88rem; color: #1a4a7a;
+            background: none; border: none;
+            border-bottom: 1px solid #eef2f7;
+            cursor: pointer; text-decoration: none; transition: background 0.12s;
+        }
+        .dropdown-menu a:last-child, .dropdown-menu button:last-child { border-bottom: none; }
+        .dropdown-menu a:hover, .dropdown-menu button:hover { background: #f0f5ff; }
+        .dropdown-menu .cerrar-sesion { color: #c0392b; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <header class="header-form">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <h1>Red Sismica Ciudadana (Murcia)</h1>
+        </div>
+        <div id="headerUsuario"></div>
+    </header>
+
+    <main class="contenido">
+        <div class="tarjeta">
+            <h2>Bienvenido a RSC Murcia</h2>
+            <a href="registrarTerremotos.html" class="btn btn-verde">Registrar Terremoto</a>
+            <a href="Visor.html" class="btn btn-azul">Ir al visor de terremotos</a>
+        </div>
+    </main>
+
+    <script>
+        const usuarioId     = sessionStorage.getItem('usuarioId');
+        const usuarioNombre = sessionStorage.getItem('usuarioNombre');
+        const wrapper       = document.getElementById('headerUsuario');
+
+        if (usuarioId) {
+            wrapper.innerHTML = `
+                <div class="usuario-wrapper">
+                    <button class="usuario-btn" onclick="toggleDropdown(event)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="8" r="4"/>
+                            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+                        </svg>
+                        ${usuarioNombre}
+                    </button>
+                    <div class="dropdown-menu" id="dropdownMenu">
+                        <a href="MiCuenta.html">Mi cuenta</a>
+                        <a href="MisRegistros.html">Mis registros</a>
+                        <button class="cerrar-sesion" onclick="cerrarSesion()">Cerrar Sesion</button>
+                    </div>
+                </div>`;
+        } else {
+            wrapper.innerHTML = `<a class="login" href="login.html">Iniciar sesion</a>`;
+        }
+
+        function toggleDropdown(e) {
+            e.stopPropagation();
+            document.getElementById('dropdownMenu').classList.toggle('open');
+        }
+        document.addEventListener('click', () => {
+            document.getElementById('dropdownMenu')?.classList.remove('open');
+        });
+
+        async function cerrarSesion() {
+            try {
+                await fetch('/users/logout', { method: 'POST', credentials: 'include' });
+            } catch (_) {}
+            sessionStorage.removeItem('usuarioId');
+            sessionStorage.removeItem('usuarioNombre');
+            window.location.href = 'index.html';
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>RSC Murcia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+
+<!-- ── CABECERA ── -->
+<header class="header-form">
+    <div style="display:flex; align-items:center; gap:12px;">
+        <a href="index.html" class="home-link" title="Inicio">
+            <img src="images/casa.png" alt="Inicio" style="width:24px; height:24px;">
+        </a>
+        <h1>Red Sismica Ciudadana (Murcia)</h1>
+    </div>
+    <div id="headerUsuario"></div>
+</header>
+
+<!-- ── CONTENIDO PRINCIPAL ── -->
+<main class="form-contenido">
+    <div class="form-card">
+
+        <h2 class="mis-registros-titulo">Mis Registros</h2>
+
+        <div class="barra-filtro">
+            <input type="text" id="filtroTexto" placeholder="Buscar por ubicación o descripción…" oninput="filtrarYRenderizar()">
+            <select id="filtroFuerza" onchange="filtrarYRenderizar()">
+                <option value="">Cualquier fuerza</option>
+                <option value="1-3">Leve (1–3)</option>
+                <option value="4-6">Moderado (4–6)</option>
+                <option value="7-10">Fuerte (7–10)</option>
+            </select>
+            <select id="filtroOrden" onchange="filtrarYRenderizar()">
+                <option value="desc">Más recientes primero</option>
+                <option value="asc">Más antiguos primero</option>
+            </select>
+        </div>
+
+        <div id="contenedorRegistros">
+            <div class="estado-cargando">
+                <div class="spinner"></div>
+                <p>Cargando tus registros…</p>
+            </div>
+        </div>
+
+        <div class="paginacion" id="paginacion"></div>
+
+        <div style="text-align:center; margin-top:24px;">
+            <a href="registrarTerremotos.html" class="btn btn-verde" style="display:inline-block; padding:12px 32px; font-size:1rem;">
+                ➕ Añadir registro
+            </a>
+        </div>
+
+    </div>
+</main>
+
+<!-- ── MODAL CONFIRMAR BORRADO ── -->
+<div class="overlay-modal" id="modalBorrar">
+    <div class="modal-card-confirmar">
+        <div class="icono-aviso">🗑️</div>
+        <h3>Eliminar registro</h3>
+        <p>¿Estás seguro de que quieres eliminar este registro? Esta acción no se puede deshacer.</p>
+        <div class="modal-botones-confirmar">
+            <button class="btn-cancelar-modal" onclick="cerrarModalBorrar()">Cancelar</button>
+            <button class="btn-confirmar-borrar" onclick="confirmarBorrado()">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── LIGHTBOX FOTOS ── -->
+<div class="lightbox" id="lightbox" onclick="cerrarLightbox()">
+    <button class="lightbox-close" onclick="cerrarLightbox()">&times;</button>
+    <img id="lightboxImg" src="" alt="Foto ampliada">
+</div>
+
+<script>
+//  SESIÓN
+const usuarioId     = sessionStorage.getItem('usuarioId');
+const usuarioNombre = sessionStorage.getItem('usuarioNombre');
+
+if (!usuarioId) {
+    window.location.href = 'login.html?aviso=registros';
+}
+
+document.getElementById('headerUsuario').innerHTML = `
+    <div class="usuario-wrapper">
+        <button class="usuario-btn" onclick="toggleDropdown(event)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="8" r="4"/>
+                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+            </svg>
+            ${usuarioNombre}
+        </button>
+        <div class="dropdown-menu" id="dropdownMenu">
+            <a href="MiCuenta.html">Mi cuenta</a>
+            <a href="MisRegistros.html">Mis registros</a>
+            <button class="cerrar-sesion" onclick="cerrarSesion()">Cerrar Sesión</button>
+        </div>
+    </div>`;
+
+function toggleDropdown(e) {
+    e.stopPropagation();
+    document.getElementById('dropdownMenu').classList.toggle('open');
+}
+document.addEventListener('click', () => {
+    document.getElementById('dropdownMenu')?.classList.remove('open');
+});
+async function cerrarSesion() {
+    try { await fetch('/users/logout', { method: 'POST', credentials: 'include' }); } catch(_) {}
+    sessionStorage.removeItem('usuarioId');
+    sessionStorage.removeItem('usuarioNombre');
+    window.location.href = 'index.html';
+}
+
+//  DATOS Y PAGINACIÓN
+let todosLosRegistros  = [];
+let registrosFiltrados = [];
+const POR_PAGINA = 6;
+let paginaActual = 1;
+let idABorrar    = null;
+
+//  CARGA DESDE LA API
+async function cargarRegistros() {
+    try {
+const res = await fetch(`/registros/mios?usuarioId=${usuarioId}`, { credentials: 'include' });        if (!res.ok) throw new Error('Error de servidor');
+        const data = await res.json();
+        todosLosRegistros = Array.isArray(data) ? data : [];
+    } catch (err) {
+        console.error(err);
+        todosLosRegistros = [];
+    }
+    filtrarYRenderizar();
+}
+
+//  FILTRAR Y ORDENAR
+function filtrarYRenderizar() {
+    paginaActual = 1;
+    const texto  = document.getElementById('filtroTexto').value.toLowerCase().trim();
+    const fuerza = document.getElementById('filtroFuerza').value;
+    const orden  = document.getElementById('filtroOrden').value;
+
+    registrosFiltrados = todosLosRegistros.filter(r => {
+        const coincideTexto = !texto ||
+            (r.ubicacion   || '').toLowerCase().includes(texto) ||
+            (r.descripcion || '').toLowerCase().includes(texto);
+
+        let coincideFuerza = true;
+        if (fuerza) {
+            const [min, max] = fuerza.split('-').map(Number);
+            coincideFuerza = parseInt(r.fuerza) >= min && parseInt(r.fuerza) <= max;
+        }
+
+        return coincideTexto && coincideFuerza;
+    });
+
+    registrosFiltrados.sort((a, b) => {
+        const da = new Date(a.fechaHora || 0);
+        const db = new Date(b.fechaHora || 0);
+        return orden === 'asc' ? da - db : db - da;
+    });
+
+    renderizarPagina();
+    renderizarPaginacion();
+}
+
+//  RENDERIZAR PÁGINA ACTUAL
+function renderizarPagina() {
+    const contenedor = document.getElementById('contenedorRegistros');
+
+    if (registrosFiltrados.length === 0) {
+        contenedor.innerHTML = `
+            <div class="estado-vacio">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+                    <rect x="9" y="3" width="6" height="4" rx="1"/>
+                    <path d="M9 12h6M9 16h4"/>
+                </svg>
+                <p>No tienes registros todavía.</p>
+                <a href="registrarTerremotos.html" class="btn btn-verde">Registrar mi primer terremoto</a>
+            </div>`;
+        return;
+    }
+
+    const inicio = (paginaActual - 1) * POR_PAGINA;
+    const pagina = registrosFiltrados.slice(inicio, inicio + POR_PAGINA);
+    contenedor.innerHTML = pagina.map(r => crearTarjeta(r)).join('');
+}
+
+// 
+//  HTML DE TARJETA
+function crearTarjeta(r) {
+    const fuerza    = parseInt(r.fuerza) || 0;
+    const fecha     = r.fechaHora ? formatearFecha(r.fechaHora) : 'Sin fecha';
+    const ubicacion = r.ubicacion  || 'Ubicación no especificada';
+    const desc      = r.descripcion || '<em>Sin descripción</em>';
+
+    let tags = '';
+    if (r.lugarUsuario) {
+        const icono = r.lugarUsuario === 'interior' ? '🏠' : '🌳';
+        tags += `<span class="tag tag-lugar">${icono} ${r.lugarUsuario.charAt(0).toUpperCase() + r.lugarUsuario.slice(1)}</span>`;
+    }
+    if (r.danioEstructural === true || r.danioEstructural === 'true') {
+        tags += `<span class="tag tag-danio">⚠️ Daños estructurales</span>`;
+    } else if (r.danioEstructural === false || r.danioEstructural === 'false') {
+        tags += `<span class="tag tag-ok">✔ Sin daños estructurales</span>`;
+    }
+    if (r.caidaElemento === true || r.caidaElemento === 'true') {
+        tags += `<span class="tag tag-caida">📦 Caída de elementos</span>`;
+    }
+
+    let fotosHtml = '';
+    if (Array.isArray(r.fotos) && r.fotos.length > 0) {
+        fotosHtml = `<div class="registro-fotos">
+            ${r.fotos.map(src => `<img src="${src}" alt="Foto" onclick="abrirLightbox('${src}')">`).join('')}
+        </div>`;
+    }
+
+    return `
+    <div class="registro-card" id="card-${r._id}">
+        <div class="registro-card-header">
+            <div>
+                <h3>📍 ${ubicacion}</h3>
+                <span class="registro-fecha">🕒 ${fecha}</span>
+            </div>
+            <div class="fuerza-badge fuerza-${fuerza}" title="Fuerza percibida">${fuerza}</div>
+        </div>
+        <p class="registro-descripcion">${desc}</p>
+        ${tags ? `<div class="registro-tags">${tags}</div>` : ''}
+        ${fotosHtml}
+        <div class="registro-acciones">
+            <button class="btn-editar" onclick="editarRegistro('${r._id}')">✏️ Editar</button>
+            <button class="btn-eliminar" onclick="pedirBorrado('${r._id}')">🗑️ Eliminar</button>
+        </div>
+    </div>`;
+}
+
+//  PAGINACIÓN
+function renderizarPaginacion() {
+    const totalPaginas = Math.ceil(registrosFiltrados.length / POR_PAGINA);
+    const pag = document.getElementById('paginacion');
+
+    if (totalPaginas <= 1) { pag.innerHTML = ''; return; }
+
+    let html = `<button onclick="cambiarPagina(${paginaActual - 1})" ${paginaActual === 1 ? 'disabled' : ''}>‹ Anterior</button>`;
+    for (let i = 1; i <= totalPaginas; i++) {
+        html += `<button class="${i === paginaActual ? 'activa' : ''}" onclick="cambiarPagina(${i})">${i}</button>`;
+    }
+    html += `<button onclick="cambiarPagina(${paginaActual + 1})" ${paginaActual === totalPaginas ? 'disabled' : ''}>Siguiente ›</button>`;
+    html += `<span class="pag-info">${registrosFiltrados.length} registro${registrosFiltrados.length !== 1 ? 's' : ''}</span>`;
+    pag.innerHTML = html;
+}
+
+function cambiarPagina(n) {
+    const totalPaginas = Math.ceil(registrosFiltrados.length / POR_PAGINA);
+    if (n < 1 || n > totalPaginas) return;
+    paginaActual = n;
+    renderizarPagina();
+    renderizarPaginacion();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+//  ACCIONES
+function editarRegistro(id) {
+    window.location.href = `ModificarRegistro.html?id=${id}`;
+}
+
+function pedirBorrado(id) {
+    idABorrar = id;
+    document.getElementById('modalBorrar').classList.add('open');
+}
+
+function cerrarModalBorrar() {
+    idABorrar = null;
+    document.getElementById('modalBorrar').classList.remove('open');
+}
+
+async function confirmarBorrado() {
+    if (!idABorrar) return;
+    try {
+        const res = await fetch(`/registros/${idABorrar}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        if (res.ok) {
+            todosLosRegistros = todosLosRegistros.filter(r => r._id !== idABorrar);
+            filtrarYRenderizar();
+        } else {
+            alert('No se pudo eliminar el registro. Inténtalo de nuevo.');
+        }
+    } catch(err) {
+        alert('Error de conexión.');
+    }
+    cerrarModalBorrar();
+}
+
+//  LIGHTBOX
+function abrirLightbox(src) {
+    document.getElementById('lightboxImg').src = src;
+    document.getElementById('lightbox').classList.add('open');
+}
+
+function cerrarLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.getElementById('lightboxImg').src = '';
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        cerrarLightbox();
+        cerrarModalBorrar();
+    }
+});
+
+//  UTILIDADES
+function formatearFecha(str) {
+    const d = new Date(str);
+    if (isNaN(d)) return str;
+    return d.toLocaleString('es-ES', {
+        day: '2-digit', month: 'long', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    });
+}
+
+cargarRegistros();
+</script>
+
+</body>
+</html>

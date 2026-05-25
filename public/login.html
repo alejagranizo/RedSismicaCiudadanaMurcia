@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>RSC Murcia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+
+    <script>
+        function mostrarPassword() {
+            var cambio = document.getElementById("contraseña");
+            var icono = document.getElementById("img-ojo");
+
+            if (cambio.type == "password") {
+                cambio.type = "text";
+                // Cambia a la imagen de ojo abierto
+                icono.src = "images/ojo-abierto.png"; 
+            } else {
+                cambio.type = "password";
+                // Vuelve a la imagen de ojo cerrado
+                icono.src = "images/ojo-cerrado.png";
+            }
+        }
+    </script>
+    
+    <header class="header-form">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <a href="index.html" class="home-link" title="Inicio">
+                <img src="images/casa.png" alt="Inicio" style="width:24px; height:24px;">
+            </a>
+            <h1>Red Sismica Ciudadana (Murcia)</h1>
+        </div>
+    </header>
+
+    <main class="contenido-login">
+        <div class="tarjeta-form">
+
+            <a href="javascript:history.back()" class="btn-atras-img" title="Volver atrás">
+                <img src="images/flecha-izquierda.png" alt="Volver">
+            </a>
+            <h2 style="text-align:center; color:#1a4a7a; margin-bottom:24px;">Inicio de sesión</h2> 
+
+            <!-- Aviso si viene desde RegistrarTerremotos -->
+            <p class="aviso-login" id="avisoLogin" style="display:none; color:#1a4a7a; font-size:0.9rem; margin-bottom:16px; text-align:center;">
+                ¡Antes de registrar un terremoto, debe iniciar sesión!
+            </p>
+
+            <div class="campo-grupo">
+                <input type="text" id="usuario" placeholder="Usuario">
+                <span class="error-msg" id="err-usuario">El nombre de usuario es obligatorio.</span>
+            </div>
+
+            <div class="campo-grupo">
+                <div class="input-wrapper">
+                    <input type="password" id="contraseña" placeholder="Contraseña">
+                    <button type="button" class="toggle-pass" onclick="mostrarPassword()">
+                        <img id="img-ojo" src="images/ojo-cerrado.png" alt="Mostrar">
+                    </button>
+                </div>
+                <span class="error-msg" id="err-contraseña">La contraseña es obligatoria.</span>
+            </div>
+
+            <p class="error-msg" id="err-credenciales" style="text-align:center; font-size:0.9rem;">
+                Usuario o contraseña incorrectos.
+            </p>
+
+            <div class="botones-usuario">
+                <button class="btn btn-verde" onclick="iniciarSesion()">Iniciar Sesión</button>
+                <p style="margin:4px 0; font-size:0.9rem; text-align:center;">¿No tiene cuenta?</p>
+                <a id="btnCrearUsuario" class="btn btn-azul" href="CrearUsuario.html">Crear Usuario</a>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Mostrar aviso si viene desde RegistrarTerremotos
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('aviso') === 'registro') {
+            document.getElementById('avisoLogin').style.display = 'block';
+            const origen = params.get('origen');
+            document.getElementById('btnCrearUsuario').href = origen === 'visor'
+                ? 'CrearUsuario.html?aviso=registro&origen=visor'
+                : 'CrearUsuario.html?aviso=registro';
+        }
+
+        function mostrarError(id, mostrar) {
+            document.getElementById(id).style.display = mostrar ? 'block' : 'none';
+        }
+
+        async function iniciarSesion() {
+            const usuario   = document.getElementById('usuario').value.trim();
+            const contraseña = document.getElementById('contraseña').value;
+
+            mostrarError('err-usuario',      !usuario);
+            mostrarError('err-contraseña',   !contraseña);
+            mostrarError('err-credenciales', false);
+
+            if (!usuario || !contraseña) return;
+
+            try {
+                const respuesta = await fetch('/users/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuario, contraseña })
+                });
+
+                if (respuesta.ok) {
+                    const datos = await respuesta.json();
+                    sessionStorage.setItem('usuarioId', datos.usuario._id);
+                    sessionStorage.setItem('usuarioNombre', datos.usuario.usuario);
+                    const params = new URLSearchParams(window.location.search);
+                    const origen = params.get('origen');
+                    if (params.get('aviso') === 'registro') {
+                        window.location.href = origen === 'visor'
+                            ? 'registrarTerremotos.html?origen=visor'
+                            : 'registrarTerremotos.html';
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                } else {
+                    mostrarError('err-credenciales', true);
+                }
+            } catch (err) {
+                alert('No se pudo conectar con el servidor.');
+            }
+        }
+    </script>
+
+</body>
+</html>

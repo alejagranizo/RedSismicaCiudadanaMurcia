@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>RSC Murcia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+    #map {
+        height: 300px;
+        width: 100%;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+    }
+</style>
+</head>
+<body>
+    <!--Cabecera-->
+    <header class="header-form">
+        <h1>Red Sismica Ciudadana (Murcia)</h1>
+        <div class="usuario" style="position:relative;">
+            <button onclick="toggleDropdown(event)" style="display:flex;align-items:center;gap:8px;background:none;border:none;color:white;cursor:pointer;font-size:0.9rem;padding:4px 8px;border-radius:6px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px;height:28px;">
+                    <circle cx="12" cy="8" r="4"/>
+                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+                </svg>
+                <span id="nombreUsuario"></span>
+            </button>
+            <div id="dropdownMenu" style="display:none;position:absolute;top:calc(100% + 8px);right:0;background:white;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.18);overflow:hidden;min-width:170px;z-index:999;">
+                <button onclick="cerrarSesion()" style="display:block;width:100%;text-align:left;padding:11px 18px;font-size:0.88rem;color:#c0392b;font-weight:600;background:none;border:none;border-bottom:1px solid #eef2f7;cursor:pointer;">Cerrar Sesión</button>
+                <a href="MiCuenta.html" style="display:block;padding:11px 18px;font-size:0.88rem;color:#1a4a7a;text-decoration:none;border-bottom:1px solid #eef2f7;">Mi cuenta</a>
+                <a href="MisRegistros.html" style="display:block;padding:11px 18px;font-size:0.88rem;color:#1a4a7a;text-decoration:none;">Mis registros</a>
+            </div>
+        </div>
+    </header>
+    <script>
+        function toggleDropdown(e) {
+            e.stopPropagation();
+            const dd = document.getElementById('dropdownMenu');
+            dd.style.display = dd.style.display === 'block' ? 'none' : 'block';
+        }
+        document.addEventListener('click', () => {
+            const dd = document.getElementById('dropdownMenu');
+            if (dd) dd.style.display = 'none';
+        });
+    </script>
+
+    <!--Contenido-->
+    <main class="form-contenido">
+        <div class="form-card">
+            <h2 style="text-align:center; color:#1a4a7a; margin-bottom:24px;">Registro de Movimiento Sísmico</h2> 
+            <div class="form-grid">
+                <!--Izquierda-->
+                <div style="display:flex; flex-direction:column; gap:18px;">
+                    <div class="campo-grupo">
+                        <label for="ubicacion">Referencia del lugar:</label>
+                        <div class="ubicacion-row">
+                            <input type="text" id="ubicacion" placeholder="Ej: Plaza Santo Domingo, Murcia">
+                            <button class="btn-ubicacion" type="button" onclick="obtenerUbicacionActual()" title="Usar mi GPS">📍</button>
+                        </div>
+                        <p style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">Señale el punto exacto en el mapa:</p>
+                        <div id="map"></div>
+                        <input type="hidden" id="latitud">
+                        <input type="hidden" id="longitud">
+                    </div>
+                    <div class="campo-grupo">
+                        <label>Indique del 1 al 10 la fuerza con la que ha sentido el terremoto, siendo el 10 el escenario más fuerte:</label>
+                        <input type="range" id="fuerza" min="1" max="10" value="5" oninput="actualizarSlider(this.value)">
+                        <span class="slider-valor" id="valorSlider">5</span>
+                    </div>
+                    <div class="campo-grupo">
+                        <label>Introduzca la fecha y la hora a la que ha sentido el seismo:</label>
+                        <input type="datetime-local" id="fechaHora">
+                    </div>
+
+                </div>
+
+                <!--Derecha-->
+                <div style="display:flex; flex-direction:column; gap:20px;">
+                    <div class="campo-grupo">
+                        <textarea id="descripcion" placeholder="Describa brevemente los sucesos"></textarea>
+                    </div>
+                    <div class="check-grupo">
+                        <div class="check-pregunta">
+                            <p>¿Dónde se encontraba usted en el momento del sismo?</p>
+                            <div class="check-opciones">
+                                <label><input type="radio" name="lugar" value="interior"> Interior</label>
+                                <label><input type="radio" name="lugar" value="exterior"> Exterior</label>
+                            </div>
+                        </div>
+                        <div class="check-pregunta">
+                            <p>¿Ha apreciado daños estructurales en algún edificio?</p>
+                            <div class="check-opciones">
+                                <label><input type="radio" name="danos" value="true"> Sí</label>
+                                <label><input type="radio" name="danos" value="false"> No</label>
+                            </div>
+                        </div>
+                        <div class="check-pregunta">
+                            <p>¿Ha apreciado usted la caída de algún elemento?</p>
+                            <div class="check-opciones">
+                                <label><input type="radio" name="caida" value="true"> Sí</label>
+                                <label><input type="radio" name="caida" value="false"> No</label>
+                            </div>
+                        </div>
+                        <div class="campo-grupo">
+                            
+                            <label for="fotos">Adjuntar fotos del lugar:</label>
+                            <input type="file"
+                                id="fotos"
+                                name="fotos"
+                                accept="image/*"
+                                multiple
+                                style="display:none"
+                                onchange="mostrarFotos()">
+                            <button type="button"
+                                    onclick="document.getElementById('fotos').click()">
+                            Examinar...
+                            </button>
+
+                            <div id="preview-fotos" style="margin-top:10px; display:flex; flex-direction:column; gap:10px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--Botones-->
+            <div class="botones-form">
+                <button class="btn btn-verde" onclick="enviarRegistro()">Enviar registro</button>
+                <a class="btn btn-rojo" id="btnCancelar" href="index.html">Cancelar</a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Cargar nombre de usuario desde sessionStorage
+        const usuarioId = sessionStorage.getItem('usuarioId');
+        const usuarioNombre = sessionStorage.getItem('usuarioNombre');
+
+        if (!usuarioId) {
+            // Si no hay sesión, redirigir al login
+            window.location.href = 'login.html?aviso=registro';
+        } else {
+            document.getElementById('nombreUsuario').textContent = usuarioNombre;
+        }
+
+        // Botón cancelar: volver al visor si viene de ahí
+        const _origen = new URLSearchParams(window.location.search).get('origen');
+        if (_origen === 'visor') {
+            document.getElementById('btnCancelar').href = 'Visor.html';
+        }
+
+        async function cerrarSesion() {
+            try {
+                await fetch('/users/logout', { method: 'POST', credentials: 'include' });
+            } catch (_) {}
+            sessionStorage.removeItem('usuarioId');
+            sessionStorage.removeItem('usuarioNombre');
+            window.location.href = 'index.html';
+        }
+        function actualizarSlider(valor) {
+            document.getElementById('valorSlider').textContent = valor;
+        }
+        function usarUbicacion() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    const lat = pos.coords.latitude.toFixed(4);
+                    const lon = pos.coords.longitude.toFixed(4);
+                    document.getElementById('ubicacion').value = lat + ', ' + lon;
+                }, function() {
+                    alert('No se pudo obtener la ubicación. Active los permisos de localización.');
+                });
+            } else {
+                alert('Su navegador no soporta geolocalización.');
+            }
+        }
+
+        async function enviarRegistro() {
+            const usuarioId = sessionStorage.getItem('usuarioId');
+            const ubicacion = document.getElementById('ubicacion').value.trim();
+            const latitud = document.getElementById('latitud').value;
+            const longitud = document.getElementById('longitud').value;
+            const fuerza = document.getElementById('fuerza').value;
+            const fechaHora = document.getElementById('fechaHora').value;
+            const descripcion = document.getElementById('descripcion').value.trim();
+            const inputFotos = document.getElementById('fotos');
+            const archivos = inputFotos.files;
+
+            if (!ubicacion && !fechaHora) { 
+                alert('Introduzca una dirección y una fecha.'); 
+                return; 
+            }
+
+            if (!ubicacion) { 
+                alert('Introduzca una dirección.'); 
+                return; 
+            }
+
+            if (!fechaHora) { 
+                alert('Introduzca una fecha.'); 
+                return; 
+            }
+
+            // Usamos FormData en lugar de un objeto JSON
+            const formData = new FormData();
+            formData.append('usuarioId', usuarioId);
+            formData.append('ubicacion', ubicacion);
+            formData.append('latitud', latitud);
+            formData.append('longitud', longitud);
+            formData.append('fuerza', fuerza);
+            formData.append('fechaHora', fechaHora);
+            formData.append('descripcion', descripcion);
+    
+            // Añadimos cada foto al formData
+            for (let i = 0; i < archivos.length; i++) {
+                formData.append('fotos', archivos[i]);
+            }
+
+            try {
+                const respuesta = await fetch('/registros', {
+                    method: 'POST',
+                    body: formData 
+                });
+
+                if (respuesta.ok) {
+                    window.location.href = 'RegistroExitoso.html';
+                } else {
+                    alert('Error al guardar el registro.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error de conexión.');
+            }
+        }
+
+const MAX_FOTOS = 10;
+        let listaArchivos = [];
+        let previewUrls = [];
+
+        //Construir la lista de archivos seleccionados
+        function mostrarFotos() {
+        const input = document.getElementById('fotos');
+        const preview = document.getElementById('preview-fotos');
+        if (!preview) return;
+
+        const nuevos = Array.from(input.files);
+
+        // Si ya estás en el máximo
+        if (listaArchivos.length >= MAX_FOTOS) {
+            alert(`Has alcanzado el máximo de ${MAX_FOTOS} archivos.`);
+            input.value = ""; // limpia selección recién hecha
+            return;
+        }
+
+        // Cuántos huecos quedan
+        const huecos = MAX_FOTOS - listaArchivos.length;
+
+        // Si selecciona más de los huecos disponibles (por ejemplo 11 de golpe o quedan 2 y mete 5)
+        if (nuevos.length > huecos) {
+            alert(`Solo puedes seleccionar ${MAX_FOTOS} archivos. Solo se añadirán ${huecos} archivo.`);
+        }
+
+        // Nos quedamos solo con los que caben
+        const paraAgregar = nuevos.slice(0, huecos);
+
+        // Evitar duplicados
+        const existe = (f) =>
+            listaArchivos.some(x =>
+            x.name === f.name && x.size === f.size && x.lastModified === f.lastModified
+            );
+
+        paraAgregar.forEach(f => { if (!existe(f)) listaArchivos.push(f); });
+
+        // Reconstruir FileList del input con todos
+        const dt = new DataTransfer();
+        listaArchivos.forEach(f => dt.items.add(f));
+        input.files = dt.files;
+
+        // Pintar lista
+        pintarLista();
+
+        // (Opcional) permite volver a seleccionar el mismo archivo después
+        // Si lo pones aquí, NO verás "X archivos seleccionados" (que tú quieres quitar)
+        input.value = "";
+        }
+        
+        //Mostrar la lista
+        function pintarLista() {
+        const preview = document.getElementById('preview-fotos');
+        if (!preview) return;
+
+        // Limpiar URLs anteriores para evitar fugas de memoria
+        previewUrls.forEach(url => URL.revokeObjectURL(url));
+        previewUrls = [];
+
+        preview.innerHTML = '';
+
+        listaArchivos.forEach((file, index) => {
+            const fila = document.createElement('div');
+            fila.style.display = 'flex';
+            fila.style.alignItems = 'center';
+            fila.style.gap = '10px';
+
+            // Crear URL para la vista previa
+            const url = URL.createObjectURL(file);
+            previewUrls.push(url);
+
+            fila.innerHTML = `
+            <img src="${url}" alt="preview"
+                style="width:48px; height:48px; object-fit:cover; border-radius:6px; border:1px solid #ddd;">
+            <span style="flex:1; font-size:0.8rem;">${index + 1}. ${file.name}</span>
+            <button type="button" onclick="eliminarFoto(${index})"
+                    style="background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">
+                Eliminar
+            </button>
+            `;
+
+            preview.appendChild(fila);
+        });
+        }
+
+
+        //Eliminar imagen de la lista
+        function eliminarFoto(index) {
+        listaArchivos.splice(index, 1);
+
+        // Actualizar FileList del input
+        const input = document.getElementById('fotos');
+        const dt = new DataTransfer();
+        listaArchivos.forEach(f => dt.items.add(f));
+        input.files = dt.files;
+
+        pintarLista();
+        }
+    </script>
+</body>
+<script>
+    // Inicializar mapa centrado en Murcia
+    const map = L.map('map').setView([37.987, -1.13], 10);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let marcador = null;
+
+    // Función al hacer clic en el mapa
+    map.on('click', function(e) {
+        const { lat, lng } = e.latlng;
+        ponerMarcador(lat, lng);
+    });
+
+    function ponerMarcador(lat, lng) {
+        if (marcador) {
+            marcador.setLatLng([lat, lng]);
+        } else {
+            marcador = L.marker([lat, lng]).addTo(map);
+        }
+        // Guardar en inputs ocultos
+        document.getElementById('latitud').value = lat;
+        document.getElementById('longitud').value = lng;
+    }
+
+    // Botón de ubicación actual
+    function obtenerUbicacionActual() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(pos => {
+                const { latitude, longitude } = pos.coords;
+                map.setView([latitude, longitude], 15);
+                ponerMarcador(latitude, longitude);
+            });
+        }
+    }
+</script>
+</html>

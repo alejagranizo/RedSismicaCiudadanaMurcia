@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>RSC Murcia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        #map {
+            height: 300px;
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+
+<!-- CABECERA -->
+<header class="header-form">
+    <div style="display:flex; align-items:center; gap:12px;">
+        <a href="MisRegistros.html" class="home-link" title="Volver a mis registros">
+            <img src="images/casa.png" alt="Inicio" style="width:24px; height:24px;">
+        </a>
+        <h1>Red Sismica Ciudadana (Murcia)</h1>
+    </div>
+    <div class="usuario" style="position:relative;">
+        <button onclick="toggleDropdown(event)" style="display:flex;align-items:center;gap:8px;background:none;border:none;color:white;cursor:pointer;font-size:0.9rem;padding:4px 8px;border-radius:6px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px;height:28px;">
+                <circle cx="12" cy="8" r="4"/>
+                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+            </svg>
+            <span id="nombreUsuario"></span>
+        </button>
+        <div id="dropdownMenu" style="display:none;position:absolute;top:calc(100% + 8px);right:0;background:white;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.18);overflow:hidden;min-width:170px;z-index:999;">
+            <a href="MiCuenta.html" style="display:block;padding:11px 18px;font-size:0.88rem;color:#1a4a7a;text-decoration:none;border-bottom:1px solid #eef2f7;">Mi cuenta</a>
+            <a href="MisRegistros.html" style="display:block;padding:11px 18px;font-size:0.88rem;color:#1a4a7a;text-decoration:none;">Mis registros</a>
+            <button onclick="cerrarSesion()" style="display:block;width:100%;text-align:left;padding:11px 18px;font-size:0.88rem;color:#c0392b;font-weight:600;background:none;border:none;border-top:1px solid #eef2f7;cursor:pointer;">Cerrar Sesión</button>
+        </div>
+    </div>
+</header>
+
+<!-- CONTENIDO -->
+<main class="form-contenido">
+    <div class="form-card">
+
+        <!-- Estado cargando -->
+        <div id="estadoCargando" class="estado-cargando">
+            <div class="spinner"></div>
+            <p>Cargando registro…</p>
+        </div>
+
+        <!-- Formulario (oculto hasta cargar) -->
+        <div id="formulario" style="display:none;">
+            <h2 style="text-align:center; color:#1a4a7a; margin-bottom:24px;">Modificar Movimiento Sísmico</h2>
+            <div class="form-grid">
+
+                <!-- Izquierda -->
+                <div style="display:flex; flex-direction:column; gap:18px;">
+                    <div class="campo-grupo">
+                        <label for="ubicacion">Referencia del lugar:</label>
+                        <div class="ubicacion-row">
+                            <input type="text" id="ubicacion" placeholder="Ej: Dentro del edificio">
+                        </div>
+                    </div>
+                    <div class="campo-grupo">
+                        <label>Señale el punto exacto en el mapa: <b style="color:red;">*</b></label>
+                        <button type="button" onclick="obtenerUbicacionActual()" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 14px;background:#1a4a7a;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">
+                            📍 Usar mi Ubicación
+                        </button>
+                        <div id="map"></div>
+                        <input type="hidden" id="latitud">
+                        <input type="hidden" id="longitud">
+                    </div>
+                    <div class="campo-grupo">
+                        <label>Indique del 1 al 10 la fuerza con la que ha sentido el terremoto:</label>
+                        <input type="range" id="fuerza" min="1" max="10" value="5" step="1" oninput="actualizarSlider(this.value)">
+                        <div class="range-ticks">
+                            <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                            <span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+                        </div>
+                    </div>
+                    <p style="color:#ff0000; font-size:1rem; margin:0;">* Debe incluir una ubicación, una fecha y una hora.</p>
+                </div>
+
+                <!-- Derecha -->
+                <div style="display:flex; flex-direction:column; gap:20px;">
+                    <div class="campo-grupo">
+                        <label>Fecha del terremoto: <b style="color:red;">*</b></label>
+                        <input type="date" id="fecha">
+                    </div>
+                    <div class="campo-grupo">
+                        <label>Hora a la que percibió el movimiento: <b style="color:red;">*</b></label>
+                        <input type="time" id="hora">
+                    </div>
+                    <div class="campo-grupo">
+                        <textarea id="descripcion" placeholder="Describa brevemente los sucesos"></textarea>
+                    </div>
+                    <div class="check-grupo">
+                        <div class="check-pregunta">
+                            <p>¿Dónde se encontraba usted en el momento del sismo?</p>
+                            <div class="check-opciones">
+                                <label><input type="radio" name="lugar" value="interior"> Interior</label>
+                                <label><input type="radio" name="lugar" value="exterior"> Exterior</label>
+                            </div>
+                        </div>
+                        <div class="check-pregunta">
+                            <p>¿Ha apreciado daños estructurales en algún edificio?</p>
+                            <div class="check-opciones">
+                                <label><input type="radio" name="danos" value="true"> Sí</label>
+                                <label><input type="radio" name="danos" value="false"> No</label>
+                            </div>
+                        </div>
+                        <div class="check-pregunta">
+                            <p>¿Ha apreciado usted la caída de algún elemento?</p>
+                            <div class="check-opciones">
+                                <label><input type="radio" name="caida" value="true"> Sí</label>
+                                <label><input type="radio" name="caida" value="false"> No</label>
+                            </div>
+                        </div>
+                        <div class="campo-grupo">
+                            <label>Fotos actuales:</label>
+                            <div id="preview-fotos-existentes"></div>
+                            <label for="fotosNuevas" style="margin-top:8px;">Añadir nuevas fotos (máx. 10):</label>
+                            <input type="file" id="fotosNuevas" accept="image/*" multiple style="display:none" onchange="mostrarFotosNuevas()">
+                            <button type="button" onclick="document.getElementById('fotosNuevas').click()" style="margin-top:6px;">Examinar...</button>
+                            <div id="preview-fotos-nuevas" style="margin-top:10px;display:flex;flex-direction:column;gap:10px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Botones -->
+            <div class="botones-form">
+                <button class="btn btn-verde" onclick="guardarModificacion()">Guardar cambios</button>
+                <a class="btn btn-rojo" href="MisRegistros.html">Cancelar</a>
+            </div>
+        </div>
+
+        <!-- Error -->
+        <div id="estadoError" style="display:none; text-align:center; padding:40px 20px; color:#c0392b;">
+            <p id="mensajeError">No se pudo cargar el registro.</p>
+            <a href="MisRegistros.html" style="color:#1a4a7a;">Volver a mis registros</a>
+        </div>
+
+    </div>
+</main>
+
+<script>
+// ── SESIÓN ──
+const usuarioId     = sessionStorage.getItem('usuarioId');
+const usuarioNombre = sessionStorage.getItem('usuarioNombre');
+
+if (!usuarioId) window.location.href = 'login.html';
+
+document.getElementById('nombreUsuario').textContent = usuarioNombre;
+
+function toggleDropdown(e) {
+    e.stopPropagation();
+    const dd = document.getElementById('dropdownMenu');
+    dd.style.display = dd.style.display === 'block' ? 'none' : 'block';
+}
+document.addEventListener('click', () => {
+    const dd = document.getElementById('dropdownMenu');
+    if (dd) dd.style.display = 'none';
+});
+async function cerrarSesion() {
+    try { await fetch('/users/logout', { method: 'POST', credentials: 'include' }); } catch(_) {}
+    sessionStorage.removeItem('usuarioId');
+    sessionStorage.removeItem('usuarioNombre');
+    window.location.href = 'index.html';
+}
+
+// ── ID DEL REGISTRO ──
+const registroId = new URLSearchParams(window.location.search).get('id');
+if (!registroId) window.location.href = 'MisRegistros.html';
+
+// ── SLIDER ──
+function actualizarSlider(valor) {
+    document.getElementById('fuerza').value = valor;
+}
+
+// ── FOTOS EXISTENTES ──
+let fotosExistentes = [];
+let archivosNuevos  = [];
+
+function renderizarFotosExistentes() {
+    const preview = document.getElementById('preview-fotos-existentes');
+    if (fotosExistentes.length === 0) {
+        preview.innerHTML = '<p style="font-size:0.8rem;color:#999;">Sin fotos guardadas.</p>';
+        return;
+    }
+    preview.innerHTML = fotosExistentes.map((src, i) => `
+        <div id="foto-exist-${i}" style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <img src="${src}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #ddd;">
+            <span style="flex:1;font-size:0.8rem;word-break:break-all;">${src.split('/').pop()}</span>
+            <button type="button" onclick="quitarFotoExistente(${i})"
+                style="background:#e74c3c;color:white;border:none;padding:4px 9px;border-radius:5px;cursor:pointer;">✕</button>
+        </div>`).join('');
+}
+
+function quitarFotoExistente(i) {
+    fotosExistentes.splice(i, 1);
+    renderizarFotosExistentes();
+}
+
+function mostrarFotosNuevas() {
+    const input   = document.getElementById('fotosNuevas');
+    const preview = document.getElementById('preview-fotos-nuevas');
+    const nuevos  = Array.from(input.files);
+    const MAX     = 10;
+    const huecos  = MAX - fotosExistentes.length - archivosNuevos.length;
+
+    if (huecos <= 0) { alert('Has alcanzado el máximo de 10 fotos.'); input.value = ''; return; }
+
+    const paraAgregar = nuevos.slice(0, huecos);
+    paraAgregar.forEach(f => {
+        if (!archivosNuevos.some(x => x.name === f.name && x.size === f.size)) {
+            archivosNuevos.push(f);
+        }
+    });
+
+    // Reconstruir FileList
+    const dt = new DataTransfer();
+    archivosNuevos.forEach(f => dt.items.add(f));
+    input.files = dt.files;
+
+    preview.innerHTML = '';
+    archivosNuevos.forEach((f, i) => {
+        const url  = URL.createObjectURL(f);
+        const fila = document.createElement('div');
+        fila.style.cssText = 'display:flex;align-items:center;gap:10px;';
+        fila.innerHTML = `
+            <img src="${url}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #ddd;">
+            <span style="flex:1;font-size:0.8rem;">${f.name}</span>
+            <button type="button" onclick="eliminarFotoNueva(${i})"
+                style="background:#e74c3c;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">X</button>`;
+        preview.appendChild(fila);
+    });
+    input.value = '';
+}
+
+function eliminarFotoNueva(i) {
+    archivosNuevos.splice(i, 1);
+    const dt = new DataTransfer();
+    archivosNuevos.forEach(f => dt.items.add(f));
+    document.getElementById('fotosNuevas').files = dt.files;
+    mostrarFotosNuevas();
+}
+
+// ── CARGAR REGISTRO ──
+async function cargarRegistro() {
+    try {
+        const res = await fetch(`/registros/${registroId}`);
+        console.log('GET /registros/' + registroId + ' → status:', res.status);
+
+        if (!res.ok) {
+            const txt = await res.text();
+            console.error('Respuesta error:', txt);
+            document.getElementById('mensajeError').textContent =
+                `No se pudo cargar el registro (HTTP ${res.status}): ${txt}`;
+            mostrarError();
+            return;
+        }
+
+        const r = await res.json();
+        console.log('Registro cargado:', r);
+
+        document.getElementById('ubicacion').value   = r.ubicacion   || '';
+        document.getElementById('descripcion').value = r.descripcion || '';
+        document.getElementById('fuerza').value      = r.fuerza || 5;
+
+        if (r.fechaHora) {
+            const d = new Date(r.fechaHora);
+            if (!isNaN(d)) {
+                document.getElementById('fecha').value = d.toISOString().slice(0, 10);
+                document.getElementById('hora').value  = d.toISOString().slice(11, 16);
+            }
+        }
+
+        if (r.lugarUsuario) {
+            const radio = document.querySelector(`input[name="lugar"][value="${r.lugarUsuario}"]`);
+            if (radio) radio.checked = true;
+        }
+        const danioRadio = document.querySelector(`input[name="danos"][value="${String(r.danioEstructural)}"]`);
+        if (danioRadio) danioRadio.checked = true;
+        const caidaRadio = document.querySelector(`input[name="caida"][value="${String(r.caidaElemento)}"]`);
+        if (caidaRadio) caidaRadio.checked = true;
+
+        fotosExistentes = Array.isArray(r.fotos) ? [...r.fotos] : [];
+        renderizarFotosExistentes();
+
+        // Mostrar formulario
+        document.getElementById('estadoCargando').style.display = 'none';
+        document.getElementById('formulario').style.display     = 'block';
+
+        // Iniciar mapa DESPUÉS de que el div sea visible
+        const lat = parseFloat(r.latitud)  || null;
+        const lng = parseFloat(r.longitud) || null;
+        iniciarMapa(lat, lng);
+
+    } catch(err) {
+        console.error('Excepción al cargar registro:', err);
+        document.getElementById('mensajeError').textContent = 'Error: ' + err.message;
+        mostrarError();
+    }
+}
+
+function mostrarError() {
+    document.getElementById('estadoCargando').style.display = 'none';
+    document.getElementById('estadoError').style.display    = 'block';
+}
+
+// ── GUARDAR ──
+async function guardarModificacion() {
+    const ubicacion = document.getElementById('ubicacion').value.trim();
+    const fecha     = document.getElementById('fecha').value;
+    const hora      = document.getElementById('hora').value;
+
+    if (!ubicacion) { alert('Introduce una ubicación.'); return; }
+    if (!fecha)     { alert('Introduce una fecha.'); return; }
+    if (!hora)      { alert('Introduce una hora.'); return; }
+
+    const fechaHora = `${fecha}T${hora}`;
+
+    const formData = new FormData();
+    formData.append('usuarioId',   usuarioId);
+    formData.append('ubicacion',   ubicacion);
+    formData.append('latitud',     document.getElementById('latitud').value);
+    formData.append('longitud',    document.getElementById('longitud').value);
+    formData.append('fuerza',      document.getElementById('fuerza').value);
+    formData.append('fechaHora',   fechaHora);
+    formData.append('descripcion', document.getElementById('descripcion').value.trim());
+
+    const lugarRadio = document.querySelector('input[name="lugar"]:checked');
+    if (lugarRadio) formData.append('lugarUsuario', lugarRadio.value);
+    const danosRadio = document.querySelector('input[name="danos"]:checked');
+    if (danosRadio) formData.append('danioEstructural', danosRadio.value);
+    const caidaRadio = document.querySelector('input[name="caida"]:checked');
+    if (caidaRadio) formData.append('caidaElemento', caidaRadio.value);
+
+    fotosExistentes.forEach(src => formData.append('fotosExistentes', src));
+    archivosNuevos.forEach(f   => formData.append('fotos', f));
+
+    try {
+        const res = await fetch(`/registros/${registroId}`, {
+            method: 'PUT',
+            body: formData,
+            credentials: 'include'
+        });
+        if (res.ok) {
+            window.location.href = 'MisRegistros.html';
+        } else {
+            const err = await res.json().catch(() => ({}));
+            alert('Error al guardar: ' + (err.error || res.status));
+        }
+    } catch {
+        alert('Error de conexión.');
+    }
+}
+</script>
+
+<!-- MAPA (se inicializa desde cargarRegistro una vez el div es visible) -->
+<script>
+let map, marcador;
+
+function iniciarMapa(lat, lng) {
+    const centro = (lat && lng) ? [lat, lng] : [37.987, -1.13];
+    const zoom   = (lat && lng) ? 14 : 10;
+
+    map = L.map('map').setView(centro, zoom);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    if (lat && lng) ponerMarcador(lat, lng);
+
+    map.on('click', e => ponerMarcador(e.latlng.lat, e.latlng.lng));
+}
+
+function ponerMarcador(lat, lng) {
+    if (marcador) {
+        marcador.setLatLng([lat, lng]);
+    } else {
+        marcador = L.marker([lat, lng]).addTo(map);
+    }
+    document.getElementById('latitud').value  = lat;
+    document.getElementById('longitud').value = lng;
+}
+
+function obtenerUbicacionActual() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+            map.setView([pos.coords.latitude, pos.coords.longitude], 15);
+            ponerMarcador(pos.coords.latitude, pos.coords.longitude);
+        });
+    }
+}
+
+// Arrancar
+cargarRegistro();
+</script>
+
+</body>
+</html>
