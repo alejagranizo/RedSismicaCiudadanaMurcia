@@ -353,7 +353,7 @@ function crearMarcadorPercibido(r) {
     const fecha = new Date(r.fechaHora).toLocaleString('es-ES', { dateStyle:'short', timeStyle:'short' });
     c.bindPopup(`
         <div style="font-size:0.83rem;color:#333;line-height:1.6;min-width:175px;">
-            <strong style="color:#1a4a7a;">👤 ${r.ubicacion}</strong><br>
+            <strong style="color:#1a4a7a;">📍 ${r.ubicacion}</strong><br>
             <span style="font-size:1.05rem;font-weight:700;color:${col};">Fuerza: ${r.fuerza}/10</span><br>
             📅 ${fecha}<br>
             ${r.descripcion ? `<em>${r.descripcion}</em><br>` : ''}
