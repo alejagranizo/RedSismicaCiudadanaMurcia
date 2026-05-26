@@ -321,9 +321,40 @@ async function guardarModificacion() {
     const fecha     = document.getElementById('fecha').value;
     const hora      = document.getElementById('hora').value;
 
-    if (!ubicacion) { alert('Introduce una ubicación.'); return; }
-    if (!fecha)     { alert('Introduce una fecha.'); return; }
-    if (!hora)      { alert('Introduce una hora.'); return; }
+    if ((!latitud || !longitud) && (!fecha && !hora)) { 
+        alert('Introduzca una ubicación en el mapa, una fecha y una hora.'); 
+        return; 
+    }
+
+    if ((!latitud || !longitud) && !fecha) { 
+        alert('Introduzca una ubicación en el mapa y una fecha.'); 
+        return; 
+    }
+
+    if ((!latitud || !longitud) && !hora) { 
+        alert('Introduzca una ubicación en el mapa y una hora.'); 
+        return; 
+    }
+            
+    if (!latitud || !longitud) {
+        alert('Introduzca una ubicación en el mapa.');
+        return;
+    }
+
+    if (!fecha) { 
+        alert('Introduzca una fecha.'); 
+        return; 
+    }
+            
+    if (!hora) { 
+        alert('Introduzca una hora.'); 
+        return; 
+    }
+            
+    if (!fecha && !hora) { 
+        alert('Introduzca una fecha y una hora.'); 
+        return; 
+    }
 
     const fechaHora = `${fecha}T${hora}`;
 
