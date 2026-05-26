@@ -304,6 +304,11 @@
             const inputFotos = document.getElementById('fotos');
             const archivos = inputFotos.files;
 
+            if ((!latitud || !longitud) && (!fecha && !hora)) { 
+                alert('Introduzca una ubicación en el mapa, una fecha y una hora.'); 
+                return; 
+            }
+
             if ((!latitud || !longitud) && !fecha) { 
                 alert('Introduzca una ubicación en el mapa y una fecha.'); 
                 return; 
@@ -311,11 +316,6 @@
 
             if ((!latitud || !longitud) && !hora) { 
                 alert('Introduzca una ubicación en el mapa y una hora.'); 
-                return; 
-            }
-
-            if ((!latitud || !longitud) && (!fecha && !hora)) { 
-                alert('Introduzca una ubicación en el mapa, una fecha y una hora.'); 
                 return; 
             }
             
