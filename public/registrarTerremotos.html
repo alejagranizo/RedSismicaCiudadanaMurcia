@@ -106,7 +106,7 @@
                         </div>
                     </div>
                     <p style="color:#ff0000; font-size:1rem; margin:0px;padding:0px">
-                            * Debe incluir una ubicación, una fecha y una hora.
+                            * Campos obligatorios.
                     </p>
                 </div>
 
@@ -119,7 +119,7 @@
                     </div>
 
                     <div class="campo-grupo">
-                        <label>Hora a la que percibió el movimiento: <b style="color:red; font-size: 1rem">*</b>:</label>
+                        <label>Hora a la que percibió el movimiento: <b style="color:red; font-size: 1rem">*</b></label>
                         <input type="time" id="hora">
                     </div>
 
@@ -128,21 +128,21 @@
                     </div>
                     <div class="check-grupo">
                         <div class="check-pregunta">
-                            <p>¿Dónde se encontraba usted en el momento del sismo?</p>
+                            <p>¿Dónde se encontraba usted en el momento del sismo?<b style="color:red; font-size: 1rem">*</b></p>
                             <div class="check-opciones">
                                 <label><input type="radio" name="lugar" value="interior"> Interior</label>
                                 <label><input type="radio" name="lugar" value="exterior"> Exterior</label>
                             </div>
                         </div>
                         <div class="check-pregunta">
-                            <p>¿Ha apreciado daños estructurales en algún edificio?</p>
+                            <p>¿Ha apreciado daños estructurales en algún edificio?<b style="color:red; font-size: 1rem">*</b></p>
                             <div class="check-opciones">
                                 <label><input type="radio" name="danos" value="true"> Sí</label>
                                 <label><input type="radio" name="danos" value="false"> No</label>
                             </div>
                         </div>
                         <div class="check-pregunta">
-                            <p>¿Ha apreciado usted la caída de algún elemento?</p>
+                            <p>¿Ha apreciado usted la caída de algún elemento?<b style="color:red; font-size: 1rem">*</b></p>
                             <div class="check-opciones">
                                 <label><input type="radio" name="caida" value="true"> Sí</label>
                                 <label><input type="radio" name="caida" value="false"> No</label>
@@ -304,41 +304,19 @@
             const inputFotos = document.getElementById('fotos');
             const archivos = inputFotos.files;
 
-            if ((!latitud || !longitud) && (!fecha && !hora)) { 
-                alert('Introduzca una ubicación en el mapa, una fecha y una hora.'); 
-                return; 
-            }
-
-            if ((!latitud || !longitud) && !fecha) { 
-                alert('Introduzca una ubicación en el mapa y una fecha.'); 
-                return; 
-            }
-
-            if ((!latitud || !longitud) && !hora) { 
-                alert('Introduzca una ubicación en el mapa y una hora.'); 
-                return; 
-            }
-            
-            if (!latitud || !longitud) {
-                alert('Introduzca una ubicación en el mapa.');
+            if (
+                !latitud ||
+                !longitud ||
+                !fecha ||
+                !hora ||
+                !fuerza ||
+                !document.querySelector('input[name="lugar"]:checked') ||
+                !document.querySelector('input[name="danos"]:checked') ||
+                !document.querySelector('input[name="caida"]:checked')
+            ) {
+                alert("Tienes que rellenar todos los campos obligatorios.");
                 return;
             }
-
-            if (!fecha) { 
-                alert('Introduzca una fecha.'); 
-                return; 
-            }
-            
-            if (!hora) { 
-                alert('Introduzca una hora.'); 
-                return; 
-            }
-            
-            if (!fecha && !hora) { 
-                alert('Introduzca una fecha y una hora.'); 
-                return; 
-            }
-
 
             // Usamos FormData en lugar de un objeto JSON
             const formData = new FormData();
