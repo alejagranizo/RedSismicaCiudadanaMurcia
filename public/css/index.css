@@ -1417,11 +1417,11 @@ input[type="range"] {
 .dropdown-menu .cerrar-sesion { color: #c0392b; font-weight: 600; }
 /* Botón oscuro (Visor, etc.) */
 .btn-oscuro {
-    background-color: #333;
+    background-color: #555;
     color: white;
 }
 
 .btn-oscuro:hover {
-    background-color: #555;
+    background-color: #333;
     transform: scale(1.03);
 }
