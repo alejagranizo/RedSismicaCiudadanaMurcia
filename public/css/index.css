@@ -633,7 +633,7 @@ input[type="range"] {
 
 .filtro-panel.open { display: flex; }
 
-.filtro-check-row {
+.filtro-check-row_ign, .filtro-check-row_ciudadano {
     padding-top: 10px;
     display: flex;
     align-items: center;
@@ -643,8 +643,13 @@ input[type="range"] {
     font-weight: 600;
     cursor: pointer;
 }
+.filtro-check-row_ign input[type=checkbox] {
+    width: 17px;
+    height: 17px;
+    accent-color: #e67e22;
+}
 
-.filtro-check-row input[type=checkbox] {
+.filtro-check-row_ciudadano input[type=checkbox] {
     width: 17px;
     height: 17px;
     accent-color: #1a4a7a;
