@@ -556,16 +556,11 @@ function aplicarFiltros() {
 }
 
 function toggleFiltroPanel() {
-    const panel    = document.getElementById('filtroPanel');
-    const btn      = document.querySelector('.filtro-btn');
-    const contador = document.querySelector('.visor-contador');
-    const open     = panel.classList.toggle('open');
+    const panel = document.getElementById('filtroPanel');
+    const btn   = document.querySelector('.filtro-btn');
+    const open  = panel.classList.toggle('open');
     btn.style.display = open ? 'none' : '';
-    // Desplazar contador y controles de zoom
-    const offset = open ? '320px' : '10px';
-    if (contador) contador.style.left = offset;
-    // Leaflet zoom control
-    const leafletLeft = document.querySelectorAll('.leaflet-left .leaflet-control-container, .leaflet-control-zoom');
+    // Solo desplazar el control de zoom de Leaflet
     document.querySelectorAll('.leaflet-left').forEach(el => {
         el.style.marginLeft = open ? '310px' : '';
     });

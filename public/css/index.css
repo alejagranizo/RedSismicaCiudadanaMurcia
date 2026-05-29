@@ -883,11 +883,11 @@ input[type="range"] {
     flex-shrink: 0;
 }
 
-/* Contador */
+/* Contador — fijo, justo a la izquierda de la leyenda */
 .visor-contador {
     position: absolute;
     bottom: 40px;
-    left: 10px;
+    right: 200px;
     z-index: 700;
     background: white;
     border-radius: 8px;
@@ -896,22 +896,10 @@ input[type="range"] {
     font-size: 0.8rem;
     color: #333;
     line-height: 1.7;
-    transition: left 0.3s ease;
 }
 
-/* Desplazar contador y controles zoom cuando el panel de filtros está abierto */
-.filtro-panel.open ~ .visor-contador,
-.visor-map-wrapper:has(.filtro-panel.open) .visor-contador {
-    left: 320px;
-}
-
-/* Leaflet zoom control desplazado cuando panel abierto */
-.visor-map-wrapper:has(.filtro-panel.open) .leaflet-left .leaflet-control {
-    margin-left: 320px;
-    transition: margin-left 0.3s ease;
-}
-
-.visor-map-wrapper .leaflet-left .leaflet-control {
+/* Leaflet zoom control — se desplaza al abrir el panel de filtros */
+.visor-map-wrapper .leaflet-left {
     transition: margin-left 0.3s ease;
 }
 
