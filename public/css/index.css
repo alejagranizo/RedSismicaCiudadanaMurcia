@@ -856,7 +856,7 @@ input[type="range"] {
 /* Leyenda */
 .visor-leyenda {
     position: absolute;
-    bottom: 40px;
+    bottom: 20px;
     right: 10px;
     z-index: 700;
     background: white;
@@ -891,7 +891,7 @@ input[type="range"] {
 /* Contador — fijo, justo a la izquierda de la leyenda */
 .visor-contador {
     position: absolute;
-    bottom: 40px;
+    bottom: 20px;
     right: 200px;
     z-index: 700;
     background: white;

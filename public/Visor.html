@@ -2,8 +2,9 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="images/logo.png">
     <title>Visor - Murcia Sísmica</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />83
     <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -55,12 +56,12 @@
     <!-- Panel capas -->
     <div class="capas-panel" id="capasPanel">
         <label>
-            <input type="checkbox" id="capaPoblacion" onchange="toggleCapaPoblacion(this.checked)">
-            Población
+            <input type="checkbox" id="capaFallas" onchange="toggleCapaFallas(this.checked)">
+            Fallas QAFI
         </label>
         <label>
-            <input type="checkbox" id="capaUsos" onchange="toggleCapaUsos(this.checked)">
-            Usos del suelo
+            <input type="checkbox" id="capaPNOA" onchange="toggleCapaPNOA(this.checked)">
+            Ortofoto PNOA
         </label>
     </div>
 
@@ -268,30 +269,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-let capaPoblacionLayer = null;
-let capaUsosLayer      = null;
-
-function toggleCapaPoblacion(activa) {
-    if (activa) {
-        capaPoblacionLayer = L.tileLayer(
-            'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_nolabels/{z}/{x}/{y}.png',
-            { opacity: 0.5, attribution: '© CARTO' }
-        ).addTo(map);
-    } else {
-        if (capaPoblacionLayer) { map.removeLayer(capaPoblacionLayer); capaPoblacionLayer = null; }
-    }
-}
-
-function toggleCapaUsos(activa) {
-    if (activa) {
-        capaUsosLayer = L.tileLayer(
-            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            { opacity: 0.35, attribution: '© OpenStreetMap' }
-        ).addTo(map);
-    } else {
-        if (capaUsosLayer) { map.removeLayer(capaUsosLayer); capaUsosLayer = null; }
-    }
-}
+let capaPNOALayer = null;
 
 function toggleCapas(e) {
     e.stopPropagation();
@@ -623,6 +601,81 @@ fetch('/registros')
         initFechasPerc();
     })
     .catch(() => { renderizarPercibidos([]); });
+
+// ════════════════════════════════════════
+//  CAPA FALLAS QAFI
+// ════════════════════════════════════════
+let capaFallas = null;
+
+const estiloFalla = {
+    color: '#8B0000',
+    weight: 2,
+    opacity: 0.8
+};
+
+const SENTIDOS = {
+    'N':  'Normal',
+    'R':  'Inversa',
+    'SR': 'Oblicua inversa',
+    'SN': 'Oblicua normal',
+    'SS': 'Desgarre',
+    'U':  'Desconocido'
+};
+
+function toggleCapaFallas(activa) {
+    if (activa) {
+        if (capaFallas) {
+            capaFallas.addTo(map);
+            return;
+        }
+        fetch('/data/QAFI_faults.geojson')
+            .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+            .then(geojson => {
+                capaFallas = L.geoJSON(geojson, {
+                    style: estiloFalla,
+                    onEachFeature: (feature, layer) => {
+                        const p = feature.properties;
+                        const sentido = SENTIDOS[p.SenseOfMov] || p.SenseOfMov || '—';
+                        layer.bindPopup(`
+                            <div style="font-family:Arial,sans-serif;font-size:0.82rem;min-width:180px;">
+                                <div style="font-weight:700;color:#8B0000;margin-bottom:6px;font-size:0.88rem;">${p.FaultName || '—'}</div>
+                                <table style="border-collapse:collapse;width:100%;">
+                                    <tr><td style="color:#888;padding:2px 6px 2px 0;">ID</td><td style="font-weight:600;">${p.ID || '—'}</td></tr>
+                                    <tr><td style="color:#888;padding:2px 6px 2px 0;">Longitud</td><td style="font-weight:600;">${p.Length != null ? p.Length + ' km' : '—'}</td></tr>
+                                    <tr><td style="color:#888;padding:2px 6px 2px 0;">Tipo</td><td style="font-weight:600;">${sentido}</td></tr>
+                                </table>
+                            </div>
+                        `, { maxWidth: 260 });
+                        layer.on('mouseover', function() { this.setStyle({ weight: 4, opacity: 1 }); });
+                        layer.on('mouseout',  function() { capaFallas.resetStyle(this); });
+                    }
+                }).addTo(map);
+                capaFallas.bringToFront();
+            })
+            .catch(err => console.error('[QAFI] Error al cargar fallas:', err.message));
+    } else {
+        if (capaFallas) map.removeLayer(capaFallas);
+    }
+}
+
+function toggleCapaPNOA(activa) {
+    if (activa) {
+        capaPNOALayer = L.tileLayer.wms(
+            'https://www.ign.es/wms-inspire/pnoa-ma',
+            {
+                layers: 'OI.OrthoimageCoverage',
+                format: 'image/jpeg',
+                transparent: false,
+                version: '1.3.0',
+                attribution: '© Instituto Geográfico Nacional (IGN) – PNOA',
+                opacity: 1,
+                zIndex: 1
+            }
+        ).addTo(map);
+    } else {
+        if (capaPNOALayer) { map.removeLayer(capaPNOALayer); capaPNOALayer = null; }
+    }
+}
 
 // ════════════════════════════════════════
 //  BUSCADOR
