@@ -85,14 +85,17 @@
             <span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
         </div>
 
-        <span class="filtro-sublabel">Rango de Años: <span id="valAnioPerc">1980 – 2026</span></span>
-        <div class="range-slider-wrap">
-            <div class="slider-track" id="trackAnioPerc"></div>
-            <input type="range" id="anioPercMin" min="1980" max="2026" value="1980" step="1" oninput="controlAnioPerc()">
-            <input type="range" id="anioPercMax" min="1980" max="2026" value="2026" step="1" oninput="controlAnioPerc()">
-        </div>
-        <div class="range-ticks">
-            <span>1980</span><span>2026</span>
+        <span class="filtro-sublabel">Rango de Fechas</span>
+        <div class="filtro-fecha-row">
+            <div class="filtro-fecha-campo">
+                <input type="text" id="fechaPercMin" class="filtro-fecha-input" placeholder="DD-MM-AAAA" maxlength="10" oninput="formatFecha(this); aplicarFiltros()">
+                <span class="filtro-fecha-hint" id="hintPercMin">mín: cargando…</span>
+            </div>
+            <span class="filtro-fecha-sep">–</span>
+            <div class="filtro-fecha-campo">
+                <input type="text" id="fechaPercMax" class="filtro-fecha-input" placeholder="DD-MM-AAAA" maxlength="10" oninput="formatFecha(this); aplicarFiltros()">
+                <span class="filtro-fecha-hint" id="hintPercMax">máx: cargando…</span>
+            </div>
         </div>
 
         <hr class="filtro-separador">
@@ -113,14 +116,17 @@
             <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span>
         </div>
 
-        <span class="filtro-sublabel">Rango de Años: <span id="valAnio">1980 – 2026</span></span>
-        <div class="range-slider-wrap">
-            <div class="slider-track" id="trackAnio"></div>
-            <input type="range" id="anioMin" min="1980" max="2026" value="1980" step="1" class="ign-slider" oninput="controlAnio()">
-            <input type="range" id="anioMax" min="1980" max="2026" value="2026" step="1" class="ign-slider" oninput="controlAnio()">
-        </div>
-        <div class="range-ticks">
-            <span>1980</span><span>2026</span>
+        <span class="filtro-sublabel">Rango de Fechas</span>
+        <div class="filtro-fecha-row">
+            <div class="filtro-fecha-campo">
+                <input type="text" id="fechaIgnMin" class="filtro-fecha-input ign-fecha" placeholder="DD-MM-AAAA" maxlength="10" oninput="formatFecha(this); aplicarFiltros()">
+                <span class="filtro-fecha-hint" id="hintIgnMin">mín: cargando…</span>
+            </div>
+            <span class="filtro-fecha-sep">–</span>
+            <div class="filtro-fecha-campo">
+                <input type="text" id="fechaIgnMax" class="filtro-fecha-input ign-fecha" placeholder="DD-MM-AAAA" maxlength="10" oninput="formatFecha(this); aplicarFiltros()">
+                <span class="filtro-fecha-hint" id="hintIgnMax">máx: cargando…</span>
+            </div>
         </div>
 
 
@@ -432,29 +438,6 @@ function controlMag() {
     aplicarFiltros();
 }
 
-function controlAnio() {
-    const minInput = document.getElementById('anioMin');
-    const maxInput = document.getElementById('anioMax');
-    const track = document.getElementById('trackAnio');
-    const display = document.getElementById('valAnio');
-    let valMin = parseInt(minInput.value);
-    let valMax = parseInt(maxInput.value);
-    const gap = 1; // Diferencia mínima de años
-    if (valMin > valMax - gap) {
-        if (document.activeElement === minInput) {
-            minInput.value = valMax - gap;
-            valMin = valMax - gap;
-        } else {
-            maxInput.value = valMin + gap;
-            valMax = valMin + gap;
-        }
-    }
-    updateTrack(minInput, maxInput, track, 1980, 2026, '#e67e22');
-    display.textContent = `${valMin} – ${valMax}`;
-    
-    aplicarFiltros();
-}
-
 // Azul para ciudadanos
 function controlFuerza() {
     const minInput = document.getElementById('fuerzaMin');
@@ -482,36 +465,61 @@ function controlFuerza() {
     aplicarFiltros();
 }
 
-function controlAnioPerc() {
-    const minInput = document.getElementById('anioPercMin');
-    const maxInput = document.getElementById('anioPercMax');
-    const track = document.getElementById('trackAnioPerc');
-    const display = document.getElementById('valAnioPerc');
-    let valMin = parseInt(minInput.value);
-    let valMax = parseInt(maxInput.value);
-    const gap = 1; 
-    if (valMin > valMax - gap) {
-        if (document.activeElement === minInput) {
-            minInput.value = valMax - gap;
-            valMin = valMax - gap;
-        } else {
-            maxInput.value = valMin + gap;
-            valMax = valMin + gap;
-        }
-    }
-    updateTrack(minInput, maxInput, track, 1980, 2026, '#1a4a7a');
-    display.textContent = `${valMin} – ${valMax}`;
-
-    aplicarFiltros();
-}
-
 // Inicializar pistas al cargar
 window.addEventListener('load', () => {
     controlMag();
-    controlAnio();
     controlFuerza();
-    controlAnioPerc();
 });
+
+// ════════════════════════════════════════
+//  FORMATO Y PARSEO DE FECHAS DD-MM-AAAA
+// ════════════════════════════════════════
+function formatFecha(input) {
+    // Auto-insertar guiones mientras se escribe
+    let v = input.value.replace(/\D/g, '').substring(0, 8);
+    if (v.length >= 5) v = v.slice(0,2) + '-' + v.slice(2,4) + '-' + v.slice(4);
+    else if (v.length >= 3) v = v.slice(0,2) + '-' + v.slice(2);
+    input.value = v;
+}
+
+/** Convierte "DD-MM-AAAA" a Date (medianoche) o null si inválida */
+function parseFechaDMA(str) {
+    if (!str || str.length < 10) return null;
+    const [d, m, y] = str.split('-').map(Number);
+    if (!d || !m || !y || y < 1000) return null;
+    const dt = new Date(y, m - 1, d);
+    if (dt.getDate() !== d || dt.getMonth() !== m - 1) return null;
+    return dt;
+}
+
+/** Formatea un Date a "DD-MM-AAAA" */
+function fechaToDMA(dt) {
+    const d = String(dt.getDate()).padStart(2,'0');
+    const m = String(dt.getMonth()+1).padStart(2,'0');
+    return `${d}-${m}-${dt.getFullYear()}`;
+}
+
+/** Actualiza los hints y valores por defecto de los inputs de fecha IGN */
+function initFechasIGN() {
+    if (!datosIGN.length) return;
+    const fechas = datosIGN.map(t => t.fecha).filter(Boolean).sort((a,b) => a-b);
+    const fMin = fechas[0], fMax = fechas[fechas.length-1];
+    document.getElementById('hintIgnMin').textContent = 'mín: ' + fechaToDMA(fMin);
+    document.getElementById('hintIgnMax').textContent = 'máx: ' + fechaToDMA(fMax);
+    if (!document.getElementById('fechaIgnMin').value) document.getElementById('fechaIgnMin').value = fechaToDMA(fMin);
+    if (!document.getElementById('fechaIgnMax').value) document.getElementById('fechaIgnMax').value = fechaToDMA(fMax);
+}
+
+/** Actualiza los hints y valores por defecto de los inputs de fecha Percibidos */
+function initFechasPerc() {
+    if (!datosPercibidos.length) return;
+    const fechas = datosPercibidos.map(r => r.fechaHora ? new Date(r.fechaHora) : null).filter(Boolean).sort((a,b) => a-b);
+    const fMin = fechas[0], fMax = fechas[fechas.length-1];
+    document.getElementById('hintPercMin').textContent = 'mín: ' + fechaToDMA(fMin);
+    document.getElementById('hintPercMax').textContent = 'máx: ' + fechaToDMA(fMax);
+    if (!document.getElementById('fechaPercMin').value) document.getElementById('fechaPercMin').value = fechaToDMA(fMin);
+    if (!document.getElementById('fechaPercMax').value) document.getElementById('fechaPercMax').value = fechaToDMA(fMax);
+}
 
 // ════════════════════════════════════════
 //  FILTROS
@@ -522,18 +530,25 @@ function aplicarFiltros() {
 
     const mMin  = parseFloat(document.getElementById('magMin').value);
     const mMax  = parseFloat(document.getElementById('magMax').value);
-    const aMin  = parseInt(document.getElementById('anioMin').value);
-    const aMax  = parseInt(document.getElementById('anioMax').value);
     const fMin  = parseInt(document.getElementById('fuerzaMin').value);
     const fMax  = parseInt(document.getElementById('fuerzaMax').value);
-    const apMin = parseInt(document.getElementById('anioPercMin').value);
-    const apMax = parseInt(document.getElementById('anioPercMax').value);
+
+    // Fechas IGN
+    const fechaIgnMin = parseFechaDMA(document.getElementById('fechaIgnMin').value);
+    const fechaIgnMax = parseFechaDMA(document.getElementById('fechaIgnMax').value);
+    // Fechas Percibidos
+    const fechaPercMin = parseFechaDMA(document.getElementById('fechaPercMin').value);
+    const fechaPercMax = parseFechaDMA(document.getElementById('fechaPercMax').value);
 
     // IGN
     if (mostrarIGN) {
         renderizarIGN(datosIGN.filter(t => {
-            const anio = t.fecha ? t.fecha.getFullYear() : 0;
-            return t.mag >= mMin && t.mag <= mMax && anio >= aMin && anio <= aMax;
+            if (!t.mag || t.mag < mMin || t.mag > mMax) return false;
+            if (t.fecha) {
+                if (fechaIgnMin && t.fecha < fechaIgnMin) return false;
+                if (fechaIgnMax && t.fecha > new Date(fechaIgnMax.getTime() + 86399999)) return false;
+            }
+            return true;
         }));
     } else {
         marcadoresIGN.forEach(m => map.removeLayer(m));
@@ -544,9 +559,14 @@ function aplicarFiltros() {
     // Ciudadano
     if (mostrarPerc) {
         renderizarPercibidos(datosPercibidos.filter(r => {
-            const f    = parseInt(r.fuerza);
-            const anio = r.fechaHora ? new Date(r.fechaHora).getFullYear() : 0;
-            return f >= fMin && f <= fMax && anio >= apMin && anio <= apMax;
+            const f = parseInt(r.fuerza);
+            if (f < fMin || f > fMax) return false;
+            if (r.fechaHora) {
+                const dt = new Date(r.fechaHora);
+                if (fechaPercMin && dt < fechaPercMin) return false;
+                if (fechaPercMax && dt > new Date(fechaPercMax.getTime() + 86399999)) return false;
+            }
+            return true;
         }));
     } else {
         marcadoresPerc.forEach(m => map.removeLayer(m));
@@ -576,6 +596,7 @@ fetch('/descargar_terremotos/terremotos_murcia.geojson')
             .filter(f => f.geometry && Array.isArray(f.geometry.coordinates))
             .map(normalizeIGN);
         renderizarIGN(datosIGN);
+        initFechasIGN();
     })
     .catch(err => {
         console.error('[IGN] Error al cargar GeoJSON:', err.message);
@@ -599,7 +620,7 @@ fetch('/registros')
             : [];
         renderizarPercibidos(datosPercibidos);
         controlFuerza();
-        controlAnioPerc();
+        initFechasPerc();
     })
     .catch(() => { renderizarPercibidos([]); });
 

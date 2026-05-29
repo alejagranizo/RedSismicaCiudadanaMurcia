@@ -1440,3 +1440,58 @@ input[type="range"] {
     background-color: #333;
     transform: scale(1.03);
 }
+/* ── Inputs de fecha en filtros ── */
+.filtro-fecha-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 4px 0 2px;
+}
+
+.filtro-fecha-campo {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.filtro-fecha-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 8px;
+    border: 1.5px solid #c8d8ed;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #222;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    background: #fafcff;
+}
+
+.filtro-fecha-input:focus {
+    border-color: #1a4a7a;
+    box-shadow: 0 0 0 2px rgba(26,74,122,0.1);
+}
+
+.filtro-fecha-input.ign-fecha:focus {
+    border-color: #e67e22;
+    box-shadow: 0 0 0 2px rgba(230,126,34,0.1);
+}
+
+.filtro-fecha-hint {
+    font-size: 0.68rem;
+    color: #aaa;
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.filtro-fecha-sep {
+    font-size: 1rem;
+    color: #aaa;
+    line-height: 1;
+    padding-top: 8px;
+    flex-shrink: 0;
+}
