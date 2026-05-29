@@ -226,7 +226,7 @@ if (usuarioId) {
 } else {
     headerUsuario.innerHTML = `
         ${btnRegistrar}
-        <a class="login" href="login.html">Iniciar sesión</a>`;
+        <a class="login" href="login.html?origen=visor">Iniciar sesión</a>`;
 }
 
 function toggleDropdown(e) {
@@ -244,7 +244,7 @@ async function cerrarSesion() {
     try { await fetch('/users/logout', { method: 'POST', credentials: 'include' }); } catch(_) {}
     sessionStorage.removeItem('usuarioId');
     sessionStorage.removeItem('usuarioNombre');
-    window.location.href = 'index.html';
+    window.location.href = 'Visor.html';
 }
 
 function irARegistrar() {

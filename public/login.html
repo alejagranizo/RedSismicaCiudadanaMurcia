@@ -114,14 +114,20 @@
                     sessionStorage.setItem('usuarioNombre', datos.usuario.usuario);
                     const params = new URLSearchParams(window.location.search);
                     const origen = params.get('origen');
+                    // Mapa de orígenes → destinos tras login
+                    const destinos = {
+                        'visor':      'Visor.html',
+                        'registrar':  'registrarTerremotos.html',
+                        'index':      'index.html',
+                        'micuenta':   'MiCuenta.html',
+                        'misregistros': 'MisRegistros.html',
+                    };
                     if (params.get('aviso') === 'registro') {
                         window.location.href = origen === 'visor'
                             ? 'registrarTerremotos.html?origen=visor'
                             : 'registrarTerremotos.html';
-                    } else if (origen === 'visor') {
-                        window.location.href = 'Visor.html';
                     } else {
-                        window.location.href = 'index.html';
+                        window.location.href = destinos[origen] || 'index.html';
                     }
                 } else {
                     mostrarError('err-credenciales', true);
