@@ -554,14 +554,16 @@ function aplicarFiltros() {
 }
 
 function toggleFiltroPanel() {
-    const panel = document.getElementById('filtroPanel');
-    const btn   = document.querySelector('.filtro-btn');
-    const open  = panel.classList.toggle('open');
+    const panel    = document.getElementById('filtroPanel');
+    const btn      = document.querySelector('.filtro-btn');
+    const contador = document.querySelector('.visor-contador');
+    const open     = panel.classList.toggle('open');
     btn.style.display = open ? 'none' : '';
-    // Solo desplazar el control de zoom de Leaflet
+    // Desplazar el control de zoom y el contador al abrir el panel
     document.querySelectorAll('.leaflet-left').forEach(el => {
         el.style.marginLeft = open ? '310px' : '';
     });
+    if (contador) contador.style.left = open ? '362px' : '52px';
 }
 
 // ════════════════════════════════════════
