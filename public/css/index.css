@@ -510,11 +510,12 @@ input[type="range"] {
     z-index: 900;
     background: white;
     border-radius: 8px;
-    width: 38px;
+    width: auto;
     height: 38px;
+    padding: 0 12px 0 10px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 6px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     cursor: pointer;
     border: none;
@@ -522,7 +523,8 @@ input[type="range"] {
 }
 
 .filtro-btn:hover { background: #f0f0f0; }
-.filtro-btn svg { width: 20px; height: 20px; color: #555; }
+.filtro-btn svg { width: 18px; height: 18px; color: #555; flex-shrink: 0; }
+.filtro-btn-texto { font-size: 0.82rem; font-weight: 600; color: #333; font-family: Arial, Helvetica, sans-serif; }
 
 /* Buscador */
 .visor-buscador {
@@ -894,6 +896,31 @@ input[type="range"] {
     font-size: 0.8rem;
     color: #333;
     line-height: 1.7;
+    transition: left 0.3s ease;
+}
+
+/* Desplazar contador y controles zoom cuando el panel de filtros está abierto */
+.filtro-panel.open ~ .visor-contador,
+.visor-map-wrapper:has(.filtro-panel.open) .visor-contador {
+    left: 320px;
+}
+
+/* Leaflet zoom control desplazado cuando panel abierto */
+.visor-map-wrapper:has(.filtro-panel.open) .leaflet-left .leaflet-control {
+    margin-left: 320px;
+    transition: margin-left 0.3s ease;
+}
+
+.visor-map-wrapper .leaflet-left .leaflet-control {
+    transition: margin-left 0.3s ease;
+}
+
+/* Título de sección en leyenda */
+.leyenda-seccion-titulo {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #1a4a7a;
+    margin-bottom: 5px;
 }
 
 /* Modal login */
