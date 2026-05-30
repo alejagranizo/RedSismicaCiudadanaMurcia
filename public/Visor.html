@@ -218,8 +218,8 @@ if (usuarioId) {
                 ${usuarioNombre}
             </button>
             <div class="dropdown-menu" id="dropdownMenu">
-                <a href="MiCuenta.html">Mi cuenta</a>
-                <a href="MisRegistros.html">Mis registros</a>
+                <a href="MiCuenta.html" onclick="sessionStorage.setItem('origenAnterior', window.location.href)">Mi cuenta</a>
+                <a href="MisRegistros.html" onclick="sessionStorage.setItem('origenAnterior', window.location.href)">Mis registros</a>
                 <button class="cerrar-sesion" onclick="cerrarSesion()">Cerrar Sesión</button>
             </div>
         </div>`;

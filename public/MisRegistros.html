@@ -22,8 +22,10 @@
 
 <!-- ── CONTENIDO PRINCIPAL ── -->
 <main class="form-contenido">
-    <div class="form-card">
-
+    <div class="form-card" style="position:relative;">
+        <button onclick="volverAtras()" title="Cerrar" style="position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer; padding:4px;">
+            <img src="images/cerrar.png" alt="Cerrar" style="width:20px; height:20px;">
+        </button>
         <h2 class="mis-registros-titulo">Mis Registros</h2>
 
         <div class="barra-filtro">
@@ -323,6 +325,12 @@ function formatearFecha(str) {
         day: '2-digit', month: 'long', year: 'numeric',
         hour: '2-digit', minute: '2-digit'
     });
+}
+
+function volverAtras() {
+    const origen = sessionStorage.getItem('origenAnterior');
+    sessionStorage.removeItem('origenAnterior');
+    window.location.href = origen || 'index.html';
 }
 
 cargarRegistros();

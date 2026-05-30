@@ -47,7 +47,7 @@
     <main class="contenido">
         <div class="tarjeta">
             <h2>Bienvenido a RSC Murcia</h2>
-            <a href="registrarTerremotos.html" class="btn btn-verde">Registrar Terremoto</a>
+            <a href="registrarTerremotos.html" class="btn btn-verde">Registrar terremoto</a>
             <a href="Visor.html" class="btn btn-azul">Ir al visor de terremotos</a>
         </div>
     </main>
@@ -68,8 +68,8 @@
                         ${usuarioNombre}
                     </button>
                     <div class="dropdown-menu" id="dropdownMenu">
-                        <a href="MiCuenta.html">Mi cuenta</a>
-                        <a href="MisRegistros.html">Mis registros</a>
+                        <a href="MiCuenta.html" onclick="sessionStorage.setItem('origenAnterior', window.location.href)">Mi cuenta</a>
+                        <a href="MisRegistros.html" onclick="sessionStorage.setItem('origenAnterior', window.location.href)">Mis registros</a>
                         <button class="cerrar-sesion" onclick="cerrarSesion()">Cerrar Sesion</button>
                     </div>
                 </div>`;
