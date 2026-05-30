@@ -62,13 +62,12 @@
                 <!-- Izquierda -->
                 <div style="display:flex; flex-direction:column; gap:18px;">
                     <div class="campo-grupo">
-                        <label for="ubicacion">Referencia del lugar:</label>
+                        <label for="ubicacion">Ubicación del lugar:<b style="color:red;"> *</b></label>
                         <div class="ubicacion-row">
-                            <input type="text" id="ubicacion" placeholder="Ej: Dentro del edificio">
+                            <input type="text" id="ubicacion" placeholder="Escribe una calle o marca en el mapa" oninput="buscarEnMapa(this.value)">
                         </div>
                     </div>
                     <div class="campo-grupo">
-                        <label>Señale el punto exacto en el mapa: <b style="color:red;">*</b></label>
                         <button type="button" onclick="obtenerUbicacionActual()" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 14px;background:#1a4a7a;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">
                             📍 Usar mi Ubicación
                         </button>
@@ -77,7 +76,7 @@
                         <input type="hidden" id="longitud">
                     </div>
                     <div class="campo-grupo">
-                        <label>Indique del 1 al 10 la fuerza con la que ha sentido el terremoto:</label>
+                        <label>Indique del 1 al 10 la fuerza con la que ha sentido el terremoto:<b style="color:red;"> *</b></label>
                         <input type="range" id="fuerza" min="1" max="10" value="5" step="1" oninput="actualizarSlider(this.value)">
                         <div class="range-ticks">
                             <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
@@ -393,44 +392,68 @@ function iniciarMapa(lat, lng) {
     map.on('click', e => ponerMarcador(e.latlng.lat, e.latlng.lng));
 }
 
-async function geocodificarDireccion(lat, lng) {
-    // Intento 1: API IGN (estructura GeoJSON)
+// ── GEOCODIFICACIÓN INVERSA: mapa → input ──
+async function coordsADireccion(lat, lng) {
+    // Intento 1: IGN reverse (GeoJSON)
     try {
-        const res = await fetch(
-            `https://geocoder.ign.es/api/geocode/reverse?lon=${lng}&lat=${lat}&type=ALL`
-        );
+        const res  = await fetch(`https://geocoder.ign.es/api/geocode/reverse?lon=${lng}&lat=${lat}&type=ALL`);
         const data = await res.json();
         const props = data?.features?.[0]?.properties;
         if (props) {
             const addr = props.address || props;
-            const calle = [
+            const partes = [
                 addr.road || addr.pedestrian || addr.footway || addr.path || addr.street,
                 addr.house_number
-            ].filter(Boolean).join(', ')
-                || addr.suburb || addr.quarter
-                || addr.village || addr.town || addr.city || addr.municipality
-                || props.displayName || props.display_name;
-            if (calle) return calle;
+            ].filter(Boolean);
+            const ciudad = addr.city || addr.town || addr.village || addr.municipality || addr.suburb;
+            if (partes.length || ciudad) {
+                return [...partes, ciudad].filter(Boolean).join(', ');
+            }
         }
     } catch (_) {}
 
-    // Intento 2: Nominatim como fallback
+    // Intento 2: Nominatim fallback
     try {
-        const res = await fetch(
+        const res  = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
             { headers: { 'Accept-Language': 'es' } }
         );
         const data = await res.json();
         const addr = data?.address || {};
-        return [
-            addr.road || addr.pedestrian || addr.footway,
-            addr.house_number
-        ].filter(Boolean).join(', ')
-            || addr.suburb || addr.village || addr.town || addr.city
-            || data.display_name || null;
+        const partes = [addr.road || addr.pedestrian || addr.footway, addr.house_number].filter(Boolean);
+        const ciudad = addr.city || addr.town || addr.village || addr.suburb;
+        return [...partes, ciudad].filter(Boolean).join(', ') || data.display_name || null;
     } catch (_) {}
 
     return null;
+}
+
+// ── GEOCODIFICACIÓN DIRECTA: input → mapa (con debounce) ──
+let _buscarTimeout = null;
+function buscarEnMapa(texto) {
+    clearTimeout(_buscarTimeout);
+    if (texto.length < 4) return;
+    _buscarTimeout = setTimeout(async () => {
+        try {
+            const res  = await fetch(
+                `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(texto)}&format=json&limit=1&countrycodes=es`,
+                { headers: { 'Accept-Language': 'es' } }
+            );
+            const data = await res.json();
+            if (data.length > 0) {
+                const lat = parseFloat(data[0].lat);
+                const lng = parseFloat(data[0].lon);
+                map.setView([lat, lng], 15);
+                if (marcador) {
+                    marcador.setLatLng([lat, lng]);
+                } else {
+                    marcador = L.marker([lat, lng]).addTo(map);
+                }
+                document.getElementById('latitud').value  = lat;
+                document.getElementById('longitud').value = lng;
+            }
+        } catch (_) {}
+    }, 700);
 }
 
 function ponerMarcador(lat, lng) {
@@ -442,13 +465,12 @@ function ponerMarcador(lat, lng) {
     document.getElementById('latitud').value  = lat;
     document.getElementById('longitud').value = lng;
 
-    // Geocodificar y rellenar el campo referencia
-    const campoUbicacion = document.getElementById('ubicacion');
-    const placeholderOriginal = campoUbicacion.placeholder;
-    campoUbicacion.placeholder = 'Obteniendo dirección…';
-    geocodificarDireccion(lat, lng).then(calle => {
-        if (calle) campoUbicacion.value = calle;
-        campoUbicacion.placeholder = placeholderOriginal;
+    // Geocodificar coordenadas y rellenar el input
+    const campo = document.getElementById('ubicacion');
+    campo.placeholder = 'Obteniendo dirección…';
+    coordsADireccion(lat, lng).then(dir => {
+        if (dir) campo.value = dir;
+        campo.placeholder = 'Escribe una calle o marca en el mapa';
     });
 }
 
