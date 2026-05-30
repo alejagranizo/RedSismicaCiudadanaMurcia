@@ -51,9 +51,12 @@
 
         <div class="paginacion" id="paginacion"></div>
 
-        <div style="text-align:center; margin-top:24px;">
-            <a href="registrarTerremotos.html" class="btn btn-verde" style="display:inline-block; padding:12px 32px; font-size:1rem;">
-                <!-- <img src="images/más.png" alt="" style="width:18px; height:18px; vertical-align:middle; margin-right:8px;"> --> ✚ Añadir registro
+        <div style="text-align:center; margin-top:24px; display:flex; flex-direction:row; justify-content:center; align-items:center; gap:12px; flex-wrap:wrap;">
+            <a href="registrarTerremotos.html" class="btn btn-verde" style="display:inline-block; padding:9px 24px; font-size:0.9rem; width:auto;">
+                ✚ Añadir registro
+            </a>
+            <a href="MiCuenta.html" onclick="sessionStorage.setItem('origenAnterior', window.location.href)" class="btn btn-azul" style="display:inline-block; padding:9px 24px; font-size:0.9rem; width:auto;">
+                👤 Ir a mi cuenta
             </a>
         </div>
 
