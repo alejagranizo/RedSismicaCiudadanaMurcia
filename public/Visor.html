@@ -110,8 +110,8 @@
         <span class="filtro-sublabel">Rango de Magnitud: <span id="valMag">0.0 - 6.0</span></span>
         <div class="range-slider-wrap">
             <div class="slider-track" id="trackMag"></div>
-            <input type="range" id="magMin" min="0" max="6" value="2" step="0.1" class="ign-slider" oninput="controlMag()">
-            <input type="range" id="magMax" min="0" max="6" value="5" step="0.1" class="ign-slider" oninput="controlMag()">
+            <input type="range" id="magMin" min="0" max="6" value="0" step="0.1" class="ign-slider" oninput="controlMag()">
+            <input type="range" id="magMax" min="0" max="6" value="6" step="0.1" class="ign-slider" oninput="controlMag()">
         </div>
         <div class="range-ticks">
             <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span>
@@ -135,24 +135,7 @@
 
     <!-- Leyenda -->
     <div class="visor-leyenda">
-        <!-- Terremotos IGN por magnitud -->
-        <div class="leyenda-seccion-titulo">Terremotos IGN</div>
-        <div class="leyenda-item">
-            <span class="leyenda-circulo" style="width:10px;height:10px;background:#f39c12;"></span>
-            <span>Mag &lt; 2.0</span>
-        </div>
-        <div class="leyenda-item">
-            <span class="leyenda-circulo" style="width:14px;height:14px;background:#e67e22;"></span>
-            <span>Mag 2.0 - 3.5</span>
-        </div>
-        <div class="leyenda-item">
-            <span class="leyenda-circulo" style="width:18px;height:18px;background:#e74c3c;"></span>
-            <span>Mag 3.5 - 5.0</span>
-        </div>
-        <div class="leyenda-item">
-            <span class="leyenda-circulo" style="width:22px;height:22px;background:#8b0000;"></span>
-            <span>Mag &gt; 5.0</span>
-        </div>
+        
         <!-- Registros ciudadanos por fuerza -->
         <div class="leyenda-seccion-titulo" style="margin-top:8px;border-top:1px solid #eee;padding-top:8px;">Registros Ciudadanos</div>
         <div class="leyenda-item">
@@ -170,6 +153,25 @@
         <div class="leyenda-item">
             <span class="leyenda-circulo" style="width:22px;height:22px;background:#0d2b45;"></span>
             <span>Fuerza 9 - 10</span>
+        </div>
+
+        <!-- Terremotos IGN por magnitud -->
+        <div class="leyenda-seccion-titulo">Terremotos IGN</div>
+        <div class="leyenda-item">
+            <span class="leyenda-circulo" style="width:10px;height:10px;background:#f39c12;"></span>
+            <span>Mag &lt; 2.0</span>
+        </div>
+        <div class="leyenda-item">
+            <span class="leyenda-circulo" style="width:14px;height:14px;background:#e67e22;"></span>
+            <span>Mag 2.0 - 3.5</span>
+        </div>
+        <div class="leyenda-item">
+            <span class="leyenda-circulo" style="width:18px;height:18px;background:#e74c3c;"></span>
+            <span>Mag 3.5 - 5.0</span>
+        </div>
+        <div class="leyenda-item">
+            <span class="leyenda-circulo" style="width:22px;height:22px;background:#8b0000;"></span>
+            <span>Mag &gt; 5.0</span>
         </div>
     </div>
 
@@ -204,7 +206,7 @@
 const usuarioId     = sessionStorage.getItem('usuarioId');
 const usuarioNombre = sessionStorage.getItem('usuarioNombre');
 const headerUsuario = document.getElementById('headerUsuario');
-const btnRegistrar  = `<button class="btn-registrar-visor" onclick="irARegistrar()">Registrar Movimiento</button>`;
+const btnRegistrar  = `<button class="btn-registrar-visor" onclick="irARegistrar()">Registrar terremoto</button>`;
 
 if (usuarioId) {
     headerUsuario.innerHTML = `
