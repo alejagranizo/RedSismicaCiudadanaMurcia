@@ -74,7 +74,7 @@
                     </div>
                     
                     <div class="campo-grupo">
-                        <label>Señale el punto exacto en el mapa:<b style="color:red; font-size: 1rem">*</b></label>
+                        <label>Señale el punto exacto en el mapa:<b style="color:red; font-size: 1rem"> *</b></label>
                         <button type="button" onclick="obtenerUbicacionActual()" style="display:flex; align-items:center; gap:8px; margin-bottom:10px; padding:8px 14px; background:#1a4a7a; color:white; border:none; border-radius:8px; cursor:pointer; font-size:0.9rem;">
                             <img src="images/posicion.png" alt="Ubicación" style="width:18px; height:18px;">
                             Usar mi Ubicación
@@ -115,7 +115,7 @@
                 <div style="display:flex; flex-direction:column; gap:20px;">
 
                     <div class="campo-grupo">
-                        <label>Fecha del terremoto:<b style="color:red; font-size: 1rem"> *</b>:</label>
+                        <label>Fecha del terremoto:<b style="color:red; font-size: 1rem"> *</b></label>
                         <input type="date" id="fecha">
                     </div>
 
@@ -487,6 +487,47 @@ const MAX_FOTOS = 10;
         ponerMarcador(lat, lng);
     });
 
+    async function geocodificarDireccion(lat, lng) {
+        // Intento 1: API IGN (estructura GeoJSON)
+        try {
+            const res = await fetch(
+                `https://geocoder.ign.es/api/geocode/reverse?lon=${lng}&lat=${lat}&type=ALL`
+            );
+            const data = await res.json();
+            // La respuesta del IGN es GeoJSON: { features: [{ properties: { address: {...} } }] }
+            const props = data?.features?.[0]?.properties;
+            if (props) {
+                const addr = props.address || props;
+                const calle = [
+                    addr.road || addr.pedestrian || addr.footway || addr.path || addr.street,
+                    addr.house_number
+                ].filter(Boolean).join(', ')
+                    || addr.suburb || addr.quarter
+                    || addr.village || addr.town || addr.city || addr.municipality
+                    || props.displayName || props.display_name;
+                if (calle) return calle;
+            }
+        } catch (_) {}
+
+        // Intento 2: Nominatim como fallback
+        try {
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+                { headers: { 'Accept-Language': 'es' } }
+            );
+            const data = await res.json();
+            const addr = data?.address || {};
+            return [
+                addr.road || addr.pedestrian || addr.footway,
+                addr.house_number
+            ].filter(Boolean).join(', ')
+                || addr.suburb || addr.village || addr.town || addr.city
+                || data.display_name || null;
+        } catch (_) {}
+
+        return null;
+    }
+
     function ponerMarcador(lat, lng) {
         if (marcador) {
             marcador.setLatLng([lat, lng]);
@@ -496,6 +537,15 @@ const MAX_FOTOS = 10;
         // Guardar en inputs ocultos
         document.getElementById('latitud').value = lat;
         document.getElementById('longitud').value = lng;
+
+        // Geocodificar y rellenar el campo referencia
+        const campoUbicacion = document.getElementById('ubicacion');
+        const placeholderOriginal = campoUbicacion.placeholder;
+        campoUbicacion.placeholder = 'Obteniendo dirección…';
+        geocodificarDireccion(lat, lng).then(calle => {
+            if (calle) campoUbicacion.value = calle;
+            campoUbicacion.placeholder = placeholderOriginal;
+        });
     }
 
     // Botón de ubicación actual
