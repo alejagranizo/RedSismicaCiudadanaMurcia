@@ -133,7 +133,7 @@ def _sanity_check_geojson(path: Path) -> None:
 
 
 # ===========================================================
-# DESCARGA DIRECTA GEOJSON DESDE EL IGN (SIN FICHERO ter....)
+# DESCARGA DIRECTA GEOJSON DESDE EL IGN
 # ===========================================================
 
 def descargar_geojson_ign() -> Path:
@@ -195,7 +195,7 @@ def descargar_geojson_ign() -> Path:
 
             download = dl.value
 
-            # ✅ Guardar SIEMPRE en el MISMO archivo (sobrescribe, no se acumula)
+
             download.save_as(RAW_GEOJSON_IGN)
             print(f">>> GeoJSON IGN guardado (sobrescrito): {RAW_GEOJSON_IGN}", flush=True)
 
@@ -213,37 +213,14 @@ def descargar_geojson_ign() -> Path:
 
 
 # ===========================================================
-# RECORTE POR MURCIA + HACER JSON-SAFE (para evitar datetime.time)
+# RECORTE POR MURCIA
 # ===========================================================
 
-def _make_json_safe(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-    """
-    Convierte objetos no serializables (datetime.time, datetime/date) a strings ISO.
-    Esto evita: TypeError: Object of type time is not JSON serializable
-    """
-    gdf = gdf.copy()
-
-    # Convertimos cualquier columna "object" que contenga time/date/datetime
-    for col in gdf.columns:
-        if col == gdf.geometry.name:
-            continue
-        if gdf[col].dtype == "object":
-            def conv(x):
-                if isinstance(x, (dt.time, dt.date, dt.datetime)):
-                    return x.isoformat()
-                return x
-            try:
-                gdf[col] = gdf[col].map(conv)
-            except Exception:
-                pass
-
-    return gdf
 
 
 def filtrar_geojson_por_murcia(geojson_path: Path, shape_murcia: Path) -> gpd.GeoDataFrame:
     print(">>> Leyendo GeoJSON del IGN", flush=True)
 
-    # NO forzamos fiona (no la tienes). GeoPandas usará pyogrio por defecto. [3](https://www.ign.es/web/gl/ign/portal/sis-catalogo-terremotos/-/catalogo-terremotos/)
     gdf = gpd.read_file(geojson_path,engine="fiona")
 
     # CRS típico de GeoJSON: WGS84
@@ -264,7 +241,7 @@ def filtrar_geojson_por_murcia(geojson_path: Path, shape_murcia: Path) -> gpd.Ge
     print(f">>> Terremotos dentro de Murcia: {len(filtrado)}", flush=True)
 
     # Convertir campos problemáticos como 'hora' a string antes de exportar
-    filtrado = _make_json_safe(filtrado)
+
 
     return filtrado
 
@@ -277,7 +254,6 @@ def main() -> None:
     raw_geojson = descargar_geojson_ign()
     gdf_murcia = filtrar_geojson_por_murcia(raw_geojson, SHAPE_MURCIA)
 
-    # Guardar final en UTF-8 con BOM para que Notepad lo lea bien
     OUTPUT_GEOJSON.write_text(gdf_murcia.to_json(), encoding="utf-8-sig")
 
     print(f">>> Guardado GeoJSON final: {OUTPUT_GEOJSON}", flush=True)
