@@ -84,18 +84,20 @@
                             Indique del 1 al 10 la fuerza con la que ha sentido el terremoto:<b style="color:red;"> *</b>
                         </label>
 
-                        <input type="range"
-                            id="fuerza"
-                            min="1"
-                            max="10"
-                            value="5"
-                            step="1"
-                            oninput="actualizarSlider(this.value)">
-
-                
-                        </span>
-
-                       
+                        <div style="position:relative; margin-bottom:4px;">
+                            <input type="range"
+                                id="fuerza"
+                                min="1" max="10" value="5" step="1"
+                                disabled
+                                style="width:100%; opacity:0.3; pointer-events:none;"
+                                oninput="actualizarSlider(this.value)">
+                            <div id="fuerzaOverlay" onclick="activarSlider()"
+                                style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+                                       background:rgba(26,74,122,0.07);border-radius:6px;cursor:pointer;
+                                       font-size:0.83rem;color:#1a4a7a;font-weight:600;gap:5px;user-select:none;border:1.5px dashed #2980b9;">
+                                👆 Pulsa aquí para indicar la fuerza
+                            </div>
+                        </div>
                         <div class="range-ticks">
                             <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
                             <span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
@@ -270,6 +272,19 @@
             sessionStorage.removeItem('usuarioNombre');
             window.location.href = 'index.html';
         }
+        let _fuerzaActivada = false;
+
+        function activarSlider() {
+            _fuerzaActivada = true;
+            const slider  = document.getElementById('fuerza');
+            slider.disabled = false;
+            slider.style.opacity = '1';
+            slider.style.pointerEvents = 'auto';
+            document.getElementById('fuerzaOverlay').style.display = 'none';
+            document.getElementById('fuerzaValorBox').style.display = 'block';
+            actualizarSlider(slider.value);
+        }
+
         function actualizarSlider(valor) {
             document.getElementById('valorSlider').textContent = valor;
         }
@@ -305,7 +320,7 @@
                 !longitud ||
                 !fecha ||
                 !hora ||
-                !fuerza ||
+                !_fuerzaActivada ||
                 !document.querySelector('input[name="lugar"]:checked') ||
                 !document.querySelector('input[name="danos"]:checked') ||
                 !document.querySelector('input[name="caida"]:checked')
