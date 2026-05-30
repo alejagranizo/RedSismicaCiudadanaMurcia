@@ -16,6 +16,9 @@ body {
    CABECERA
 ════════════════════════════════════════ */
 .header-form {
+    position: sticky;
+    top: 0;
+    z-index: 100;
     width: 100%;
     height: 60px;
     background: #1a4a7a;
@@ -1392,9 +1395,31 @@ input[type="range"] {
 .usuario-btn:hover { background: rgba(255,255,255,0.15); }
 .usuario-btn svg { width: 28px; height: 28px; }
 
-/* Responsive MisRegistros */
-@media (max-width: 600px) {
-    .registro-card { padding: 14px 16px; }
+/* Scroll propio en MisRegistros cuando hay más de 3 registros */
+#contenedorRegistros {
+    max-height: 660px;
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: #c8d8ed #f4f6fa;
+}
+
+#contenedorRegistros::-webkit-scrollbar {
+    width: 6px;
+}
+
+#contenedorRegistros::-webkit-scrollbar-track {
+    background: #f4f6fa;
+    border-radius: 8px;
+}
+
+#contenedorRegistros::-webkit-scrollbar-thumb {
+    background: #c8d8ed;
+    border-radius: 8px;
+}
+
+#contenedorRegistros::-webkit-scrollbar-thumb:hover {
+    background: #1a4a7a;
 }
 
 

@@ -7,6 +7,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="css/index.css">
 </head>
+<style>
+    html, body { height: 100%; overflow: hidden; }
+    .micuenta-layout {
+        height: calc(100vh - 60px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+</style>
 <body>
 
 <!-- ── CABECERA ── -->
@@ -21,8 +32,8 @@
 </header>
 
 <!-- ── CONTENIDO ── -->
-<main class="contenido-login">
-    <div class="tarjeta-form" style="max-width:680px;">
+<main class="micuenta-layout">
+    <div class="tarjeta-form" style="max-width:680px; width:100%;">
         <button onclick="volverAtras()" title="Cerrar" style="position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer; padding:4px;">
             <img src="images/cerrar.png" alt="Cerrar" style="width:20px; height:20px;">
         </button>
