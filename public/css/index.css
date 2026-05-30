@@ -94,7 +94,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
+    min-height: calc(100vh - 60px);
     padding: 20px;
     box-sizing: border-box;
 }
@@ -336,7 +336,7 @@ body {
 .form-contenido {
     min-height: calc(100vh - 60px);
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
     padding: 30px 20px;
     box-sizing: border-box;
@@ -1397,7 +1397,7 @@ input[type="range"] {
 
 /* Scroll propio en MisRegistros cuando hay más de 3 registros */
 #contenedorRegistros {
-    max-height: 660px;
+    max-height: 430px;
     overflow-y: auto;
     padding-right: 4px;
     scrollbar-width: thin;
