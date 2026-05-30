@@ -39,8 +39,8 @@
                 <span id="nombreUsuario"></span>
             </button>
             <div id="dropdownMenu" style="display:none;position:absolute;top:calc(100% + 8px);right:0;background:white;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.18);overflow:hidden;min-width:170px;z-index:999;">
-                <a href="MiCuenta.html" onclick="sessionStorage.setItem('origenAnterior', window.location.href)" style="display:block;padding:11px 18px;font-size:0.88rem;color:#1a4a7a;text-decoration:none;border-bottom:1px solid #eef2f7;">Mi cuenta</a>
-                <a href="MisRegistros.html" onclick="sessionStorage.setItem('origenAnterior', window.location.href)" style="display:block;padding:11px 18px;font-size:0.88rem;color:#1a4a7a;text-decoration:none;border-bottom:1px solid #eef2f7;">Mis registros</a>
+                <a href="MiCuenta.html" onclick="(function(){ const p=new URLSearchParams(window.location.search); sessionStorage.setItem('origenAnterior', p.get('origen')==='visor' ? 'Visor.html' : 'index.html'); })()" style="display:block;padding:11px 18px;font-size:0.88rem;color:#1a4a7a;text-decoration:none;border-bottom:1px solid #eef2f7;">Mi cuenta</a>
+                <a href="MisRegistros.html" onclick="(function(){ const p=new URLSearchParams(window.location.search); sessionStorage.setItem('origenAnterior', p.get('origen')==='visor' ? 'Visor.html' : 'index.html'); })()" style="display:block;padding:11px 18px;font-size:0.88rem;color:#1a4a7a;text-decoration:none;border-bottom:1px solid #eef2f7;">Mis registros</a>
                 <button onclick="cerrarSesion()" style="display:block;width:100%;text-align:left;padding:11px 18px;font-size:0.88rem;color:#c0392b;font-weight:600;background:none;border:none;border-bottom:1px solid #eef2f7;cursor:pointer;">Cerrar Sesión</button>
 
             </div>

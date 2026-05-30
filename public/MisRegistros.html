@@ -55,8 +55,8 @@
             <a href="registrarTerremotos.html" class="btn btn-verde" style="display:inline-block; padding:9px 24px; font-size:0.9rem; width:auto;">
                 ✚ Añadir registro
             </a>
-            <a href="MiCuenta.html" onclick="sessionStorage.setItem('origenAnterior', window.location.href)" class="btn btn-azul" style="display:inline-block; padding:9px 24px; font-size:0.9rem; width:auto;">
-                👤 Ir a mi cuenta
+            <a href="MiCuenta.html" onclick="(function(){ var o=sessionStorage.getItem('origenAnterior'); sessionStorage.setItem('origenAnterior', o || 'index.html'); })()" class="btn btn-azul" style="display:inline-block; padding:9px 24px; font-size:0.9rem; width:auto;">
+                Ir a mi cuenta
             </a>
         </div>
 
