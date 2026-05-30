@@ -2,8 +2,11 @@ name: Actualizar terremotos IGN
 
 on:
   schedule:
-    - cron: '0 0 * * 1'   # Cada lunes a las 00:00 UTC
-  workflow_dispatch:        # También permite lanzarlo manualmente desde GitHub
+    - cron: '0 11 * * 1'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   descargar-y-actualizar:
@@ -20,17 +23,19 @@ jobs:
 
       - name: Instalar dependencias
         run: |
-          pip install geopandas shapely playwright
+          pip install geopandas shapely playwright fiona
           python -m playwright install chromium
           python -m playwright install-deps chromium
 
       - name: Ejecutar script de descarga
-        run: python descarga.py
+        run: |
+          cd public/descargar_terremotos
+          python descarga.py
 
       - name: Commit y push del GeoJSON actualizado
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add terremotos_murcia.geojson
+          git add public/descargar_terremotos/terremotos_murcia.geojson
           git diff --cached --quiet || git commit -m "chore: actualizar terremotos_murcia.geojson [$(date -u '+%Y-%m-%d')]"
           git push

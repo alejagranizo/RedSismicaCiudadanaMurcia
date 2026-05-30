@@ -1,2 +1,4 @@
 node_modules/
 .env
+public/descargar_terremotos/descargas_ign/
+public/descargar_terremotos/debug_ign/

@@ -1,35 +1,21 @@
 Listado de rutas de carpetas para el volumen Windows
-El número de serie del volumen es 3AE5-4B6C
+El número de serie del volumen es 000000F8 3AE5:4B6C
 C:.
+¦   .env
+¦   .gitignore
 ¦   app.js
 ¦   estructura.txt
 ¦   package-lock.json
 ¦   package.json
+¦   README.md
 ¦   
++---.github
+¦   +---workflows
+¦           actualizar_terremotos.yml
+¦           
 +---bin
 ¦       www
 ¦       
-+---descargar_terremotos
-¦   ¦   descarga.py
-¦   ¦   index.html
-¦   ¦   murcia.cpg
-¦   ¦   murcia.dbf
-¦   ¦   murcia.prj
-¦   ¦   murcia.sbn
-¦   ¦   murcia.sbx
-¦   ¦   murcia.shp
-¦   ¦   murcia.shp.xml
-¦   ¦   murcia.shx
-¦   ¦   terremotos_murcia.geojson
-¦   ¦   visor.html
-¦   ¦   
-¦   +---debug_ign
-¦   ¦       fallo.html
-¦   ¦       fallo.png
-¦   ¦       
-¦   +---descargas_ign
-¦           terremotos_ign.csv
-¦           
 +---models
 ¦       Registro.js
 ¦       Usuario.js
@@ -431,6 +417,29 @@ C:.
 ¦   ¦       package.json
 ¦   ¦       README.md
 ¦   ¦       
+¦   +---dotenv
+¦   ¦   ¦   CHANGELOG.md
+¦   ¦   ¦   config.d.ts
+¦   ¦   ¦   config.js
+¦   ¦   ¦   LICENSE
+¦   ¦   ¦   package.json
+¦   ¦   ¦   README-es.md
+¦   ¦   ¦   README.md
+¦   ¦   ¦   SECURITY.md
+¦   ¦   ¦   
+¦   ¦   +---lib
+¦   ¦   ¦       cli-options.js
+¦   ¦   ¦       env-options.js
+¦   ¦   ¦       main.d.ts
+¦   ¦   ¦       main.js
+¦   ¦   ¦       
+¦   ¦   +---skills
+¦   ¦       +---dotenv
+¦   ¦       ¦       SKILL.md
+¦   ¦       ¦       
+¦   ¦       +---dotenvx
+¦   ¦               SKILL.md
+¦   ¦               
 ¦   +---ee-first
 ¦   ¦       index.js
 ¦   ¦       LICENSE
@@ -2037,11 +2046,47 @@ C:.
 ¦   +---css
 ¦   ¦       index.css
 ¦   ¦       
-¦   +---images
-¦   ¦       Cartagena.jpg
-¦   ¦       casa.png
-¦   ¦       flecha-izquierda.png
+¦   +---data
+¦   ¦       QAFI_faults.geojson
 ¦   ¦       
+¦   +---descargar_terremotos
+¦   ¦   ¦   descarga.py
+¦   ¦   ¦   index.html
+¦   ¦   ¦   murcia.cpg
+¦   ¦   ¦   murcia.dbf
+¦   ¦   ¦   murcia.prj
+¦   ¦   ¦   murcia.sbn
+¦   ¦   ¦   murcia.sbx
+¦   ¦   ¦   murcia.shp
+¦   ¦   ¦   murcia.shp.xml
+¦   ¦   ¦   murcia.shx
+¦   ¦   ¦   terremotos_murcia.geojson
+¦   ¦   ¦   visor.html
+¦   ¦   ¦   
+¦   ¦   +---debug_ign
+¦   ¦   ¦       fallo.html
+¦   ¦   ¦       fallo.png
+¦   ¦   ¦       
+¦   ¦   +---descargas_ign
+¦   ¦           terremotos_ign.csv
+¦   ¦           terremotos_ign_raw.geojson
+¦   ¦           
+¦   +---images
+¦   ¦   ¦   agregar.png
+¦   ¦   ¦   añadir.png
+¦   ¦   ¦   Cartagena.jpg
+¦   ¦   ¦   casa.png
+¦   ¦   ¦   cerrar.png
+¦   ¦   ¦   flecha-izquierda.png
+¦   ¦   ¦   logo.png
+¦   ¦   ¦   más.png
+¦   ¦   ¦   ojo-abierto.png
+¦   ¦   ¦   ojo-cerrado.png
+¦   ¦   ¦   posicion.png
+¦   ¦   ¦   
+¦   ¦   +---uploads
+¦   ¦           1779555691870-halcon milenario.jpg
+¦   ¦           
 ¦   +---javascripts
 ¦   +---stylesheets
 +---routes
