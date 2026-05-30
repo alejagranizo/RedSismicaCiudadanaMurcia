@@ -150,6 +150,7 @@ body {
     width: 80%;
     padding: 22px;
     font-size: 1.5rem;
+    border: none;
 }
 
 .btn-verde:hover {
@@ -162,6 +163,7 @@ body {
     width: 60%;
     padding: 12px;
     font-size: 1rem;
+    border: none;
 }
 
 .btn-azul:hover {
@@ -174,6 +176,7 @@ body {
     padding: 10px 30px;
     font-size: 0.95rem;
     width: auto;
+    border: none;
 }
 
 .btn-rojo:hover {
