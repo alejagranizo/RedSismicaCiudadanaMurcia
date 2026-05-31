@@ -134,8 +134,8 @@
                         'misregistros': 'MisRegistros.html',
                     };
                     if (params.get('aviso') === 'registro') {
-                        window.location.href = origen === 'visor'
-                            ? 'registrarTerremotos.html?origen=visor'
+                        window.location.href = origen
+                            ? `registrarTerremotos.html?origen=${origen}`
                             : 'registrarTerremotos.html';
                     } else {
                         window.location.href = destinos[origen] || 'index.html';

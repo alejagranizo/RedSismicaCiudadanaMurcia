@@ -181,7 +181,8 @@
         const usuarioNombre = sessionStorage.getItem('usuarioNombre');
 
         if (!usuarioId) {
-            window.location.href = 'login.html?aviso=registro';
+            const _or = new URLSearchParams(window.location.search).get('origen') || 'index';
+            window.location.href = 'login.html?aviso=registro&origen=' + _or;
         } else {
             document.getElementById('nombreUsuario').textContent = usuarioNombre;
         }
@@ -192,14 +193,16 @@
         const _editarId = _params.get('editar');
 
         if (_origen === 'visor') {
-            document.getElementById('btnCancelar').href = 'Visor.html';
+            document.getElementById('btnCancelar').onclick = () => window.location.href = 'Visor.html';
+        } else if (_origen === 'index') {
+            document.getElementById('btnCancelar').onclick = () => window.location.href = 'index.html';
         }
 
         // ── MODO EDICIÓN ──
         if (_editarId) {
             document.querySelector('h2[style*="text-align:center"]').textContent = 'Modificar Movimiento Sísmico';
             document.getElementById('btnEnviar').textContent = 'Guardar cambios';
-            document.getElementById('btnCancelar').href = 'MisRegistros.html';
+            document.getElementById('btnCancelar').onclick = () => window.location.href = 'MisRegistros.html';
         }
 
         // Llamada desde el script del mapa (garantiza que map y ponerMarcador ya existen)
