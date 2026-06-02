@@ -146,6 +146,7 @@ body {
     box-sizing: border-box;
     text-align: center;
     transition: transform 0.2s, background 0.2s;
+    cursor: pointer;
 }
 
 .btn-verde {
