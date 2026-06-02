@@ -392,57 +392,59 @@ function iniciarMapa(lat, lng) {
     map.on('click', e => ponerMarcador(e.latlng.lat, e.latlng.lng));
 }
 
-// ── GEOCODIFICACIÓN INVERSA: mapa → input ──
-async function coordsADireccion(lat, lng) {
-    // Intento 1: IGN reverse (GeoJSON)
-    try {
-        const res  = await fetch(`https://geocoder.ign.es/api/geocode/reverse?lon=${lng}&lat=${lat}&type=ALL`);
-        const data = await res.json();
-        const props = data?.features?.[0]?.properties;
-        if (props) {
-            const addr = props.address || props;
-            const partes = [
-                addr.road || addr.pedestrian || addr.footway || addr.path || addr.street,
-                addr.house_number
-            ].filter(Boolean);
-            const ciudad = addr.city || addr.town || addr.village || addr.municipality || addr.suburb;
-            if (partes.length || ciudad) {
-                return [...partes, ciudad].filter(Boolean).join(', ');
-            }
-        }
-    } catch (_) {}
-
-    // Intento 2: Nominatim fallback
-    try {
-        const res  = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-            { headers: { 'Accept-Language': 'es' } }
-        );
-        const data = await res.json();
-        const addr = data?.address || {};
-        const partes = [addr.road || addr.pedestrian || addr.footway, addr.house_number].filter(Boolean);
-        const ciudad = addr.city || addr.town || addr.village || addr.suburb;
-        return [...partes, ciudad].filter(Boolean).join(', ') || data.display_name || null;
-    } catch (_) {}
-
-    return null;
-}
-
-// ── GEOCODIFICACIÓN DIRECTA: input → mapa (con debounce) ──
-let _buscarTimeout = null;
-function buscarEnMapa(texto) {
-    clearTimeout(_buscarTimeout);
-    if (texto.length < 4) return;
-    _buscarTimeout = setTimeout(async () => {
+    // ── GEOCODIFICACIÓN INVERSA: mapa → input ──
+    async function coordsADireccion(lat, lng) {
         try {
             const res  = await fetch(
-                `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(texto)}&format=json&limit=1&countrycodes=es`,
-                { headers: { 'Accept-Language': 'es' } }
+                `https://www.cartociudad.es/geocoder/api/geocoder/reverseGeocode?lon=${lng}&lat=${lat}`
             );
             const data = await res.json();
-            if (data.length > 0) {
-                const lat = parseFloat(data[0].lat);
-                const lng = parseFloat(data[0].lon);
+            // La API devuelve un JSON plano con campos: address, tip_via, portalNumber, muni, province
+            if (data && (data.address || data.muni)) {
+                const partes = [];
+                if (data.tip_via && data.address) {
+                    partes.push(data.tip_via + ' ' + data.address);
+                } else if (data.address) {
+                    partes.push(data.address);
+                }
+                if (data.portalNumber && data.portalNumber > 0) {
+                    partes.push(String(data.portalNumber));
+                }
+                if (data.muni) partes.push(data.muni);
+                if (partes.length) return partes.join(', ');
+            }
+        } catch (_) {}
+        return null;
+    }
+
+    // ── GEOCODIFICACIÓN DIRECTA: input → mapa 
+    let _buscarTimeout = null;
+    function buscarEnMapa(texto) {
+        clearTimeout(_buscarTimeout);
+        if (texto.length < 4) return;
+        _buscarTimeout = setTimeout(async () => {
+            try {
+                // Paso 1: candidates
+                const resCand = await fetch(
+                    `https://www.cartociudad.es/geocoder/api/geocoder/candidates?q=${encodeURIComponent(texto)}&limit=1`
+                );
+                const cands = await resCand.json();
+                const candidatos = Array.isArray(cands) ? cands : (cands?.candidates || []);
+                if (candidatos.length === 0) return;
+
+                const { id, type } = candidatos[0];
+                if (!id || !type) return;
+
+                // Paso 2: find para obtener coordenadas fiables
+                const resFind = await fetch(
+                    `https://www.cartociudad.es/geocoder/api/geocoder/find?id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}`
+                );
+                const lugar = await resFind.json();
+
+                const lat = parseFloat(lugar.lat);
+                const lng = parseFloat(lugar.lng);
+                if (isNaN(lat) || isNaN(lng) || (lat === 0 && lng === 0)) return;
+
                 map.setView([lat, lng], 15);
                 if (marcador) {
                     marcador.setLatLng([lat, lng]);
@@ -451,10 +453,11 @@ function buscarEnMapa(texto) {
                 }
                 document.getElementById('latitud').value  = lat;
                 document.getElementById('longitud').value = lng;
-            }
-        } catch (_) {}
-    }, 700);
-}
+            } catch (_) {}
+        }, 700);
+    }
+
+    
 
 function ponerMarcador(lat, lng) {
     if (marcador) {
